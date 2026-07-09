@@ -143,7 +143,7 @@ export default function AdminPortal() {
       <header className="bg-slate-900 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <ShieldAlert className="text-rose-500" size={24} />
-          <h1 className="text-xl font-bold hidden sm:block">Abhaya Admin Portal</h1>
+          <h1 className="text-xl font-bold hidden sm:block">Vertex Admin Portal</h1>
         </div>
         
         <div className="flex items-center gap-6">
@@ -162,7 +162,7 @@ export default function AdminPortal() {
             )}
             <div className="text-right hidden md:block">
               <p className="text-sm font-medium">{adminUser?.displayName || 'Admin User'}</p>
-              <p className="text-xs text-slate-400">{adminUser?.phoneNumber || adminUser?.email || 'admin@abhaya.com'}</p>
+              <p className="text-xs text-slate-400">{adminUser?.phoneNumber || adminUser?.email || 'admin@vertex.com'}</p>
             </div>
           </div>
 

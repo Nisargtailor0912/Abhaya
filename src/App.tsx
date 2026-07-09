@@ -24,12 +24,16 @@ import {
   Smartphone,
   Battery,
   ShieldCheck,
-  Lock
+  Lock,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { quickActions, safetyTips, defaultSettings, defaultPersonalInfo, emergencyNumbersIndia } from './data';
 import { LocationData, UserSettings, Contact, HistoryEvent, PersonalInfo } from './types';
 import LocationMap from './components/Map';
 import AdminPortal from './components/AdminPortal';
+import SafetyBot from './components/SafetyBot';
+import { Bot } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -53,6 +57,8 @@ export default function App() {
   const [showPersonalInfo, setShowPersonalInfo] = useState(false);
   const [showEmergencyNumbers, setShowEmergencyNumbers] = useState(false);
   const [showMedicalQR, setShowMedicalQR] = useState(false);
+  const [showWidgetInfo, setShowWidgetInfo] = useState(false);
+  const [showBot, setShowBot] = useState(false);
   const [settings, setSettings] = useState<UserSettings>(defaultSettings);
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>(defaultPersonalInfo);
   
@@ -446,7 +452,7 @@ export default function App() {
     return <Auth onAuth={() => {}} />;
   }
 
-  if (user?.email?.toLowerCase() === 'abhaya@abhaya.com') {
+  if (user?.email?.toLowerCase() === 'vertex@vertex.com') {
     return <AdminPortal />;
   }
 
@@ -457,7 +463,7 @@ export default function App() {
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-rose-600">
             <ShieldAlert size={28} strokeWidth={2.5} />
-            <span className="font-bold text-xl tracking-tight">Abhaya</span>
+            <span className="font-bold text-xl tracking-tight">Vertex</span>
           </div>
           <div className="flex items-center gap-2">
             {batteryLevel !== null && (
@@ -668,13 +674,36 @@ export default function App() {
                   key={contact.id} 
                   className={`flex items-center justify-between p-4 ${idx !== contacts.length - 1 ? 'border-b border-slate-100' : ''}`}
                 >
-                  <div>
-                    <p className="font-semibold text-slate-900">{contact.name}</p>
-                    <p className="text-sm text-slate-500">{contact.relation} • {contact.phone}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center">
+                      <button 
+                        onClick={() => moveContact(idx, 'up')}
+                        disabled={idx === 0}
+                        className="text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                      >
+                        <ChevronUp size={18} />
+                      </button>
+                      <button 
+                        onClick={() => moveContact(idx, 'down')}
+                        disabled={idx === contacts.length - 1}
+                        className="text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                      >
+                        <ChevronDown size={18} />
+                      </button>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-slate-900">{contact.name}</p>
+                        {idx === 0 && (
+                          <span className="text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full uppercase tracking-wide">Primary</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500">{contact.relation} • {contact.phone}</p>
+                    </div>
                   </div>
-                  <button className="w-10 h-10 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors">
+                  <a href={`tel:${contact.phone}`} className="w-10 h-10 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
                     <Phone size={18} />
-                  </button>
+                  </a>
                 </div>
               ))
             )}
@@ -744,7 +773,7 @@ export default function App() {
       </main>
 
       <footer className="text-center py-6 text-slate-400 text-xs">
-        &copy; {new Date().getFullYear()} Abhaya. All rights reserved.
+        &copy; {new Date().getFullYear()} Vertex. All rights reserved.
       </footer>
 
       {/* Settings Modal */}
@@ -905,12 +934,87 @@ export default function App() {
                   <PhoneCall size={20} className="text-slate-400" />
                   India Emergency Numbers
                 </button>
+                <button onClick={() => { setShowProfile(false); setShowWidgetInfo(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left font-medium">
+                  <Smartphone size={20} className="text-slate-400" />
+                  Add Panic Widget
+                </button>
                 <button onClick={() => { setShowProfile(false); signOut(auth); }} className="w-full flex items-center gap-3 p-4 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium mt-4">
                   <LogOut size={20} className="text-rose-400" />
                   Sign Out
                 </button>
               </div>
 
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Widget Info Modal */}
+      <AnimatePresence>
+        {showWidgetInfo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden max-h-[90vh]"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                <h3 className="text-xl font-bold text-slate-800">Add Panic Widget</h3>
+                <button onClick={() => setShowWidgetInfo(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="p-5 overflow-y-auto space-y-6">
+                <div>
+                  <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                    <span className="bg-slate-100 text-slate-700 p-1.5 rounded-lg">🍎</span>
+                    iOS (iPhone/iPad)
+                  </h4>
+                  <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2 ml-1">
+                    <li>Open this app in <strong>Safari</strong>.</li>
+                    <li>Tap the <strong>Share</strong> button at the bottom (square with an arrow pointing up).</li>
+                    <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                    <li>Open the Shortcuts app and create a new Shortcut.</li>
+                    <li>Select "Open App" and choose Vertex.</li>
+                    <li>Add the Shortcut widget to your lock screen or home screen for instant access!</li>
+                  </ol>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-100">
+                  <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                    <span className="bg-slate-100 text-slate-700 p-1.5 rounded-lg">🤖</span>
+                    Android
+                  </h4>
+                  <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2 ml-1">
+                    <li>Open this app in <strong>Chrome</strong>.</li>
+                    <li>Tap the <strong>Menu</strong> icon (3 dots in upper right-hand corner).</li>
+                    <li>Tap <strong>"Add to Home screen"</strong>.</li>
+                    <li>You can now place the Vertex app icon anywhere on your home screen.</li>
+                    <li>Long-press the icon and use <strong>Widgets</strong> to add quick action shortcuts (if supported by your launcher).</li>
+                  </ol>
+                </div>
+                
+                <div className="bg-rose-50 text-rose-700 p-4 rounded-xl text-sm mt-4 flex gap-3">
+                  <AlertOctagon size={20} className="shrink-0 mt-0.5 text-rose-500" />
+                  <p>Adding the app to your home screen allows you to bypass the browser and trigger SOS faster during emergencies.</p>
+                </div>
+              </div>
+              
+              <div className="p-5 border-t border-slate-100">
+                <button 
+                  onClick={() => setShowWidgetInfo(false)}
+                  className="w-full bg-slate-900 text-white font-semibold rounded-xl py-3 hover:bg-slate-800 transition-colors"
+                >
+                  Got it
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1174,6 +1278,17 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Safety Bot */}
+      {showBot && <SafetyBot onClose={() => setShowBot(false)} />}
+      
+      {/* Floating Action Button for Bot */}
+      <button
+        onClick={() => setShowBot(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl shadow-indigo-200 flex items-center justify-center hover:bg-indigo-700 hover:scale-105 transition-all z-[40]"
+      >
+        <Bot size={24} />
+      </button>
     </div>
   );
 }

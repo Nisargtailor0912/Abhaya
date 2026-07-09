@@ -22,9 +22,9 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
       const trimmedEmail = email.toLowerCase().trim();
       const trimmedPassword = password.trim();
 
-      if (trimmedEmail === 'abhaya@abhaya.com' && isLogin) {
-        if (trimmedPassword !== 'abhaya@091207') {
-          setError('Invalid admin credentials. Please use the exact password for the admin account: abhaya@091207');
+      if (trimmedEmail === 'vertex@vertex.com' && isLogin) {
+        if (trimmedPassword !== 'vertex@091207') {
+          setError('Invalid admin credentials. Please use the exact password for the admin account: vertex@091207');
           setLoading(false);
           return;
         }
@@ -124,7 +124,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="text-slate-500 text-sm mt-2 text-center">
-            {isLogin ? 'Sign in to access your safety dashboard' : 'Join Abhaya to stay safe and connected'}
+            {isLogin ? 'Sign in to access your safety dashboard' : 'Join Vertex to stay safe and connected'}
           </p>
         </div>
 
