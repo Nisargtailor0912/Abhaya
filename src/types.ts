@@ -27,6 +27,7 @@ export interface UserSettings {
   locationTracking: boolean;
   lowPowerMode: boolean;
   locationAccuracy: boolean;
+  theme?: "light" | "dark" | "system";
 }
 
 export interface PersonalInfo {

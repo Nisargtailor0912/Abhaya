@@ -27,7 +27,9 @@ import {
   Lock,
   ChevronUp,
   ChevronDown,
-  LocateFixed
+  LocateFixed,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { quickActions, safetyTips, defaultSettings, defaultPersonalInfo, emergencyNumbersIndia } from './data';
 import { LocationData, UserSettings, Contact, HistoryEvent, PersonalInfo } from './types';
@@ -35,6 +37,7 @@ import LocationMap from './components/Map';
 import AdminPortal from './components/AdminPortal';
 import SafetyBot from './components/SafetyBot';
 import { Bot } from 'lucide-react';
+import { useTheme } from './useTheme';
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -61,6 +64,7 @@ export default function App() {
   const [showWidgetInfo, setShowWidgetInfo] = useState(false);
   const [showBot, setShowBot] = useState(false);
   const [settings, setSettings] = useState<UserSettings>(defaultSettings);
+  useTheme(settings.theme);
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>(defaultPersonalInfo);
   
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -446,11 +450,11 @@ export default function App() {
   };
 
   if (authLoading) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500">Loading...</div>;
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400">Loading...</div>;
   }
 
   if (!user) {
-    return <Auth onAuth={() => {}} />;
+    return <Auth onAuth={() => {}} theme={settings.theme} onThemeChange={(t: any) => setSettings(prev => ({...prev, theme: t}))} />;
   }
 
   if (user?.email?.toLowerCase() === 'vertex@vertex.com') {
@@ -458,9 +462,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 md:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-white pb-20 md:pb-0">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-20">
+      <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-20">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-rose-600">
             <ShieldAlert size={28} strokeWidth={2.5} />
@@ -474,10 +478,10 @@ export default function App() {
                 {isCharging && <span className="text-[10px] ml-0.5">⚡</span>}
               </div>
             )}
-            <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+            <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:bg-slate-700 transition-colors">
               <Settings size={20} />
             </button>
-            <button onClick={() => setShowProfile(true)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors">
+            <button onClick={() => setShowProfile(true)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:bg-slate-600 transition-colors">
               <User size={20} />
             </button>
           </div>
@@ -528,7 +532,7 @@ export default function App() {
               )}
             </motion.button>
           </div>
-          <p className="mt-6 text-slate-500 text-sm text-center max-w-xs">
+          <p className="mt-6 text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs">
             {sosActive 
               ? 'Emergency contacts and local authorities have been notified of your location.'
               : 'Use in case of emergency. This will alert your trusted contacts and share your live location.'}
@@ -537,14 +541,14 @@ export default function App() {
 
         {/* Status Bar */}
         {(sosActive || alarmActive || location.latitude || location.error) && (
-           <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col gap-3">
+           <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col gap-3">
              {location.error && (
-               <div className="flex items-center gap-3 text-sm text-slate-600">
+               <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                  <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
                    <MapPin size={16} />
                  </div>
                  <div className="flex-1">
-                   <p className="font-medium text-slate-900">Location Error</p>
+                   <p className="font-medium text-slate-900 dark:text-white">Location Error</p>
                    <p className="text-xs text-rose-600 font-medium">{location.error}</p>
                  </div>
                  <button 
@@ -555,19 +559,19 @@ export default function App() {
                        setLocation({ latitude: parseFloat(lat), longitude: parseFloat(lng), error: null });
                      }
                    }}
-                   className="text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors shrink-0"
+                   className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:bg-slate-600 px-3 py-1.5 rounded-full transition-colors shrink-0"
                  >
                    Manual Location
                  </button>
                </div>
              )}
              {!location.error && location.latitude && location.longitude && (
-               <div className="flex items-center gap-3 text-sm text-slate-600">
+               <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                    <MapPin size={16} />
                  </div>
                  <div className="flex-1 truncate">
-                   <p className="font-medium text-slate-900">Location Active</p>
+                   <p className="font-medium text-slate-900 dark:text-white">Location Active</p>
                    <p className="truncate text-xs opacity-80">Lat: {location.latitude.toFixed(4)}, Lng: {location.longitude.toFixed(4)}</p>
                  </div>
                  <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Tracking</span>
@@ -575,15 +579,15 @@ export default function App() {
              )}
              
              {alarmActive && (
-               <div className="flex items-center gap-3 text-sm text-slate-600">
+               <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                  <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
                    <Volume2 size={16} />
                  </div>
                  <div className="flex-1">
-                   <p className="font-medium text-slate-900">Loud Alarm</p>
+                   <p className="font-medium text-slate-900 dark:text-white">Loud Alarm</p>
                    <p className="text-xs opacity-80">Siren is currently playing</p>
                  </div>
-                 <button onClick={toggleAlarm} className="text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors">
+                 <button onClick={toggleAlarm} className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:bg-slate-600 px-3 py-1.5 rounded-full transition-colors">
                    Stop
                  </button>
                </div>
@@ -595,16 +599,16 @@ export default function App() {
         {/* System Security */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
-             <h2 className="text-lg font-semibold text-slate-800">System Security</h2>
+             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">System Security</h2>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 space-y-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <p className="font-semibold text-slate-900 text-sm">Antivirus Protection Active</p>
-                <p className="text-xs text-slate-500 mt-0.5">Real-time device monitoring is active. No threats detected.</p>
+                <p className="font-semibold text-slate-900 dark:text-white text-sm">Antivirus Protection Active</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real-time device monitoring is active. No threats detected.</p>
               </div>
             </div>
             
@@ -613,8 +617,8 @@ export default function App() {
                 <Lock size={20} />
               </div>
               <div>
-                <p className="font-semibold text-slate-900 text-sm">E2E Encryption</p>
-                <p className="text-xs text-slate-500 mt-0.5">Your emergency contacts and location data are end-to-end encrypted.</p>
+                <p className="font-semibold text-slate-900 dark:text-white text-sm">E2E Encryption</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Your emergency contacts and location data are end-to-end encrypted.</p>
               </div>
             </div>
           </div>
@@ -622,7 +626,7 @@ export default function App() {
 
         {/* Quick Actions */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4 px-1">Quick Tools</h2>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4 px-1">Quick Tools</h2>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => {
               const isActive = action.id === 'alarm' && alarmActive;
@@ -637,13 +641,13 @@ export default function App() {
                   className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
                     isActive 
                       ? 'border-orange-500 bg-orange-50 shadow-sm' 
-                      : 'border-slate-100 bg-white shadow-sm hover:border-slate-300'
+                      : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:border-slate-300'
                   }`}
                 >
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${action.color}`}>
                     <action.icon size={24} />
                   </div>
-                  <span className="text-xs font-medium text-slate-700 text-center">{action.title}</span>
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-200 text-center">{action.title}</span>
                 </button>
               )
             })}
@@ -653,7 +657,7 @@ export default function App() {
         {/* Live Location Map */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
-             <h2 className="text-lg font-semibold text-slate-800">Live Location</h2>
+             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Live Location</h2>
           </div>
           <LocationMap location={location} sosActive={sosActive} />
         </section>
@@ -661,48 +665,48 @@ export default function App() {
         {/* Trusted Contacts */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
-             <h2 className="text-lg font-semibold text-slate-800">Trusted Contacts</h2>
+             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Trusted Contacts</h2>
              <button onClick={() => setShowAddContact(true)} className="text-sm font-medium text-rose-600 hover:text-rose-700">Add Contact</button>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
             {contacts.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">
+              <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm">
                 No trusted contacts added yet.
               </div>
             ) : (
               contacts.map((contact, idx) => (
                 <div 
                   key={contact.id} 
-                  className={`flex items-center justify-between p-4 ${idx !== contacts.length - 1 ? 'border-b border-slate-100' : ''}`}
+                  className={`flex items-center justify-between p-4 ${idx !== contacts.length - 1 ? 'border-b border-slate-100 dark:border-slate-700' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-center">
                       <button 
                         onClick={() => moveContact(idx, 'up')}
                         disabled={idx === 0}
-                        className="text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                        className="text-slate-400 hover:text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
                       >
                         <ChevronUp size={18} />
                       </button>
                       <button 
                         onClick={() => moveContact(idx, 'down')}
                         disabled={idx === contacts.length - 1}
-                        className="text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                        className="text-slate-400 hover:text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
                       >
                         <ChevronDown size={18} />
                       </button>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-slate-900">{contact.name}</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">{contact.name}</p>
                         {idx === 0 && (
                           <span className="text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full uppercase tracking-wide">Primary</span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500">{contact.relation} • {contact.phone}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{contact.relation} • {contact.phone}</p>
                     </div>
                   </div>
-                  <a href={`tel:${contact.phone}`} className="w-10 h-10 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
+                  <a href={`tel:${contact.phone}`} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
                     <Phone size={18} />
                   </a>
                 </div>
@@ -730,19 +734,19 @@ export default function App() {
         {/* Emergency History */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
-             <h2 className="text-lg font-semibold text-slate-800">Emergency History</h2>
-             <button onClick={() => setHistory([])} className="text-sm font-medium text-slate-500 hover:text-slate-700">Clear</button>
+             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Emergency History</h2>
+             <button onClick={() => setHistory([])} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200">Clear</button>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
             {history.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">
+              <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm">
                 No recent emergencies. Stay safe!
               </div>
             ) : (
               history.map((event, idx) => (
                 <div 
                   key={event.id} 
-                  className={`flex items-start gap-4 p-4 ${idx !== history.length - 1 ? 'border-b border-slate-100' : ''}`}
+                  className={`flex items-start gap-4 p-4 ${idx !== history.length - 1 ? 'border-b border-slate-100 dark:border-slate-700' : ''}`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                     event.type === 'SOS' ? 'bg-rose-100 text-rose-600' :
@@ -756,11 +760,11 @@ export default function App() {
                      <MapPin size={20} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-900">{event.type} Triggered</p>
-                    <p className="text-sm text-slate-500 truncate">{event.location}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">{event.type} Triggered</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{event.location}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-medium text-slate-500">{new Date(event.date).toLocaleDateString()}</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{new Date(event.date).toLocaleDateString()}</p>
                     <span className={`inline-block mt-1 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${event.resolved ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'}`}>
                       {event.resolved ? 'Resolved' : 'Active'}
                     </span>
@@ -791,28 +795,54 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">Safety Settings</h3>
-                <button onClick={() => setShowSettings(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Safety Settings</h3>
+                <button onClick={() => setShowSettings(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
               <div className="overflow-y-auto p-5 space-y-6">
-                
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Appearance</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button 
+                      onClick={() => { const s = {...settings, theme: 'light'}; setSettings(s); saveUserData({ settings: s }); }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'light' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
+                    >
+                      <Sun size={20} className="text-slate-600 dark:text-slate-300" />
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Light</span>
+                    </button>
+                    <button 
+                      onClick={() => { const s = {...settings, theme: 'dark'}; setSettings(s); saveUserData({ settings: s }); }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'dark' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
+                    >
+                      <Moon size={20} className="text-slate-600 dark:text-slate-300" />
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Dark</span>
+                    </button>
+                    <button 
+                      onClick={() => { const s = {...settings, theme: 'system'}; setSettings(s); saveUserData({ settings: s }); }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'system' || !settings.theme ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
+                    >
+                      <Settings size={20} className="text-slate-600 dark:text-slate-300" />
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">System</span>
+                    </button>
+                  </div>
+                </div>
+                <hr className="border-slate-100 dark:border-slate-700" />
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><Mic size={20} /></div>
                       <div>
-                        <p className="font-semibold text-slate-900">Voice-Activated SOS</p>
-                        <p className="text-xs text-slate-500">Trigger by shouting a code word</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">Voice-Activated SOS</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Trigger by shouting a code word</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.voiceActivatedSOS} onChange={() => toggleSetting('voiceActivatedSOS')} />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-slate-800 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
 
@@ -820,13 +850,13 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><Smartphone size={20} /></div>
                       <div>
-                        <p className="font-semibold text-slate-900">Shake to Trigger</p>
-                        <p className="text-xs text-slate-500">Shake phone rapidly 3 times</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">Shake to Trigger</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Shake phone rapidly 3 times</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.shakeToTriggerSOS} onChange={() => toggleSetting('shakeToTriggerSOS')} />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-slate-800 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
 
@@ -834,13 +864,13 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center"><WifiOff size={20} /></div>
                       <div>
-                        <p className="font-semibold text-slate-900">Offline Emergency SMS</p>
-                        <p className="text-xs text-slate-500">Send standard SMS if no data</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">Offline Emergency SMS</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Send standard SMS if no data</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.offlineSMS} onChange={() => toggleSetting('offlineSMS')} />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-slate-800 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
 
@@ -848,26 +878,26 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center"><Bell size={20} /></div>
                       <div>
-                        <p className="font-semibold text-slate-900">Push Notifications</p>
-                        <p className="text-xs text-slate-500">Safety alerts in your area</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">Push Notifications</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Safety alerts in your area</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.pushNotifications} onChange={() => toggleSetting('pushNotifications')} />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-slate-800 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Battery size={20} /></div>
                       <div>
-                        <p className="font-semibold text-slate-900">Low Power Mode</p>
-                        <p className="text-xs text-slate-500">Saves battery during active SOS</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">Low Power Mode</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Saves battery during active SOS</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.lowPowerMode} onChange={() => toggleSetting('lowPowerMode')} />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-slate-800 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
 
@@ -875,18 +905,18 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><LocateFixed size={20} /></div>
                       <div className="max-w-[200px]">
-                        <p className="font-semibold text-slate-900">Location Accuracy</p>
-                        <p className="text-xs text-slate-500 leading-tight mt-0.5">Google processes sensors and signals to improve location-based services without identifying you.</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">Location Accuracy</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight mt-0.5">Google processes sensors and signals to improve location-based services without identifying you.</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
                       <input type="checkbox" className="sr-only peer" checked={settings.locationAccuracy} onChange={() => toggleSetting('locationAccuracy')} />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-slate-800 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-100">
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
                   <button 
                     onClick={() => { setShowSettings(false); signOut(auth); }} 
                     className="w-full flex items-center justify-center gap-2 p-3 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors font-medium"
@@ -916,11 +946,11 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">User Profile</h3>
-                <button onClick={() => setShowProfile(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">User Profile</h3>
+                <button onClick={() => setShowProfile(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
@@ -929,27 +959,27 @@ export default function App() {
                 <div className="w-24 h-24 bg-gradient-to-tr from-rose-400 to-rose-600 rounded-full shadow-lg flex items-center justify-center text-white text-3xl font-bold mb-4">
                   {personalInfo.fullName ? personalInfo.fullName.substring(0, 2).toUpperCase() : 'U'}
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900">{personalInfo.fullName || 'User'}</h2>
-                <p className="text-slate-500">{user?.email}</p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{personalInfo.fullName || 'User'}</h2>
+                <p className="text-slate-500 dark:text-slate-400">{user?.email}</p>
                 <div className="flex gap-2 mt-2">
                   <span className="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1"><ShieldAlert size={12} /> Verified</span>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 p-2">
-                <button onClick={() => { setShowProfile(false); setShowPersonalInfo(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left font-medium">
+              <div className="border-t border-slate-100 dark:border-slate-700 p-2">
+                <button onClick={() => { setShowProfile(false); setShowPersonalInfo(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-900 rounded-xl transition-colors text-left font-medium">
                   <User size={20} className="text-slate-400" />
                   Personal Information
                 </button>
-                <button onClick={() => { setShowProfile(false); setShowAddContact(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left font-medium">
+                <button onClick={() => { setShowProfile(false); setShowAddContact(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-900 rounded-xl transition-colors text-left font-medium">
                   <Phone size={20} className="text-slate-400" />
                   Manage Emergency Contacts
                 </button>
-                <button onClick={() => { setShowProfile(false); setShowEmergencyNumbers(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left font-medium">
+                <button onClick={() => { setShowProfile(false); setShowEmergencyNumbers(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-900 rounded-xl transition-colors text-left font-medium">
                   <PhoneCall size={20} className="text-slate-400" />
                   India Emergency Numbers
                 </button>
-                <button onClick={() => { setShowProfile(false); setShowWidgetInfo(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left font-medium">
+                <button onClick={() => { setShowProfile(false); setShowWidgetInfo(true); }} className="w-full flex items-center gap-3 p-4 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-900 rounded-xl transition-colors text-left font-medium">
                   <Smartphone size={20} className="text-slate-400" />
                   Add Panic Widget
                 </button>
@@ -978,21 +1008,21 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden max-h-[90vh]"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">Add Panic Widget</h3>
-                <button onClick={() => setShowWidgetInfo(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Add Panic Widget</h3>
+                <button onClick={() => setShowWidgetInfo(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
               <div className="p-5 overflow-y-auto space-y-6">
                 <div>
-                  <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                    <span className="bg-slate-100 text-slate-700 p-1.5 rounded-lg">🍎</span>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+                    <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-1.5 rounded-lg">🍎</span>
                     iOS (iPhone/iPad)
                   </h4>
-                  <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2 ml-1">
+                  <ol className="list-decimal list-inside text-sm text-slate-600 dark:text-slate-300 space-y-2 ml-1">
                     <li>Open this app in <strong>Safari</strong>.</li>
                     <li>Tap the <strong>Share</strong> button at the bottom (square with an arrow pointing up).</li>
                     <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
@@ -1002,12 +1032,12 @@ export default function App() {
                   </ol>
                 </div>
                 
-                <div className="pt-4 border-t border-slate-100">
-                  <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                    <span className="bg-slate-100 text-slate-700 p-1.5 rounded-lg">🤖</span>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+                    <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-1.5 rounded-lg">🤖</span>
                     Android
                   </h4>
-                  <ol className="list-decimal list-inside text-sm text-slate-600 space-y-2 ml-1">
+                  <ol className="list-decimal list-inside text-sm text-slate-600 dark:text-slate-300 space-y-2 ml-1">
                     <li>Open this app in <strong>Chrome</strong>.</li>
                     <li>Tap the <strong>Menu</strong> icon (3 dots in upper right-hand corner).</li>
                     <li>Tap <strong>"Add to Home screen"</strong>.</li>
@@ -1022,7 +1052,7 @@ export default function App() {
                 </div>
               </div>
               
-              <div className="p-5 border-t border-slate-100">
+              <div className="p-5 border-t border-slate-100 dark:border-slate-700">
                 <button 
                   onClick={() => setShowWidgetInfo(false)}
                   className="w-full bg-slate-900 text-white font-semibold rounded-xl py-3 hover:bg-slate-800 transition-colors"
@@ -1049,19 +1079,19 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[90vh] overflow-hidden"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[90vh] overflow-hidden"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">India Emergency Numbers</h3>
-                <button onClick={() => setShowEmergencyNumbers(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">India Emergency Numbers</h3>
+                <button onClick={() => setShowEmergencyNumbers(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
               <div className="p-0 overflow-y-auto max-h-[60vh]">
                 <div className="divide-y divide-slate-100">
                   {emergencyNumbersIndia.map((item, idx) => (
-                    <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                      <span className="font-medium text-slate-700">{item.service}</span>
+                    <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:bg-slate-900 transition-colors">
+                      <span className="font-medium text-slate-700 dark:text-slate-200">{item.service}</span>
                       <a href={`tel:${item.number}`} className="flex items-center gap-2 text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full">
                         <PhoneCall size={14} />
                         {item.number}
@@ -1089,47 +1119,47 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[90vh] overflow-hidden"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[90vh] overflow-hidden"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">Personal Information</h3>
-                <button onClick={() => setShowPersonalInfo(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Personal Information</h3>
+                <button onClick={() => setShowPersonalInfo(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
               
               <div className="p-5 space-y-4 overflow-y-auto">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.fullName} onChange={e => setPersonalInfo({...personalInfo, fullName: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Full Name</label>
+                  <input type="text" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.fullName} onChange={e => setPersonalInfo({...personalInfo, fullName: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                  <input type="email" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Email</label>
+                  <input type="email" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                  <input type="tel" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Phone Number</label>
+                  <input type="tel" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.bloodGroup} onChange={e => setPersonalInfo({...personalInfo, bloodGroup: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Blood Group</label>
+                  <input type="text" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.bloodGroup} onChange={e => setPersonalInfo({...personalInfo, bloodGroup: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Medical Conditions</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.medicalConditions} onChange={e => setPersonalInfo({...personalInfo, medicalConditions: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Medical Conditions</label>
+                  <input type="text" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.medicalConditions} onChange={e => setPersonalInfo({...personalInfo, medicalConditions: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Home Address</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.homeAddress} onChange={e => setPersonalInfo({...personalInfo, homeAddress: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Home Address</label>
+                  <input type="text" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.homeAddress} onChange={e => setPersonalInfo({...personalInfo, homeAddress: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Emergency Note</label>
-                  <textarea rows={3} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none" value={personalInfo.emergencyNote} onChange={e => setPersonalInfo({...personalInfo, emergencyNote: e.target.value})}></textarea>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Emergency Note</label>
+                  <textarea rows={3} className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none" value={personalInfo.emergencyNote} onChange={e => setPersonalInfo({...personalInfo, emergencyNote: e.target.value})}></textarea>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 p-5 bg-slate-50 shrink-0">
+              <div className="border-t border-slate-100 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900 shrink-0">
                 <button 
                   onClick={() => {
                     saveUserData({ personalInfo });
@@ -1161,31 +1191,31 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">Add Trusted Contact</h3>
-                <button onClick={() => setShowAddContact(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Add Trusted Contact</h3>
+                <button onClick={() => setShowAddContact(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
               
               <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="e.g., Jane Doe" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Name</label>
+                  <input type="text" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="e.g., Jane Doe" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                  <input type="tel" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="+1 234 567 8900" value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Phone Number</label>
+                  <input type="tel" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="+1 234 567 8900" value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Relation</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="e.g., Sister" value={newContact.relation} onChange={e => setNewContact({...newContact, relation: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Relation</label>
+                  <input type="text" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="e.g., Sister" value={newContact.relation} onChange={e => setNewContact({...newContact, relation: e.target.value})} />
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 p-5 bg-slate-50">
+              <div className="border-t border-slate-100 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900">
                 <button 
                   onClick={() => {
                     if (newContact.name && newContact.phone) {
@@ -1221,17 +1251,17 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
+              className="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800">Medical QR</h3>
-                <button onClick={() => setShowMedicalQR(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Medical QR</h3>
+                <button onClick={() => setShowMedicalQR(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                   <X size={24} />
                 </button>
               </div>
               
               <div className="p-8 flex flex-col items-center justify-center space-y-6">
-                <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 inline-block">
+                <div className="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 inline-block">
                   <QRCode 
                     value={JSON.stringify({
                       name: personalInfo.fullName,
@@ -1245,8 +1275,8 @@ export default function App() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-slate-900">{personalInfo.fullName}</p>
-                  <p className="text-xs text-slate-500 mt-1">Show this QR code to first responders</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{personalInfo.fullName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Show this QR code to first responders</p>
                 </div>
               </div>
             </motion.div>

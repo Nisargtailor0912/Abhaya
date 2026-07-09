@@ -128,22 +128,22 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-          className="bg-slate-50 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden max-h-[90vh] sm:h-[600px] shadow-2xl"
+          className="bg-slate-50 dark:bg-slate-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden max-h-[90vh] sm:h-[600px] shadow-2xl"
         >
           {/* Header */}
-          <div className="bg-white px-5 py-4 flex items-center justify-between border-b border-slate-100 shadow-sm z-10">
+          <div className="bg-white dark:bg-slate-800 px-5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 shadow-sm z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
                 <Bot size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 leading-tight">Vertex Bot</h3>
-                <p className="text-xs text-slate-500 font-medium">AI Companion</p>
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">Vertex Bot</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Companion</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
+              className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-50 dark:bg-slate-900 transition-colors"
             >
               <X size={24} />
             </button>
@@ -162,21 +162,21 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                   <div className={`group relative rounded-2xl p-4 ${
                     msg.role === 'user' 
                       ? 'bg-indigo-100 text-indigo-900 rounded-tr-sm' 
-                      : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm shadow-sm'
+                      : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-sm shadow-sm'
                   }`}>
                     {editingId === msg.id ? (
                       <div className="flex flex-col gap-2">
                         <textarea
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
-                          className="w-full bg-white/50 border border-indigo-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                          className="w-full bg-white dark:bg-slate-800/50 border border-indigo-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
                           rows={3}
                           autoFocus
                         />
                         <div className="flex justify-end gap-2">
                           <button 
                             onClick={() => setEditingId(null)}
-                            className="text-xs font-medium px-2 py-1 text-slate-500 hover:text-slate-700"
+                            className="text-xs font-medium px-2 py-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200"
                           >
                             Cancel
                           </button>
@@ -210,13 +210,13 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                     <div className="flex items-center gap-2 pl-1 mt-1">
                       <button 
                         onClick={() => handleFeedback(msg.id, 'up')}
-                        className={`p-1.5 rounded-full transition-colors ${msg.feedback === 'up' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                        className={`p-1.5 rounded-full transition-colors ${msg.feedback === 'up' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-700'}`}
                       >
                         <ThumbsUp size={14} />
                       </button>
                       <button 
                         onClick={() => handleFeedback(msg.id, 'down')}
-                        className={`p-1.5 rounded-full transition-colors ${msg.feedback === 'down' ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                        className={`p-1.5 rounded-full transition-colors ${msg.feedback === 'down' ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-700'}`}
                       >
                         <ThumbsDown size={14} />
                       </button>
@@ -227,11 +227,11 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] bg-white border border-slate-100 rounded-2xl rounded-tl-sm p-4 shadow-sm">
+                <div className="max-w-[85%] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2 text-slate-400">
                       <Loader2 size={16} className="animate-spin" />
-                      <span className="text-sm font-medium text-slate-500">Vertex Bot is thinking...</span>
+                      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Vertex Bot is thinking...</span>
                     </div>
                     <button 
                       onClick={stopGenerating}
@@ -248,7 +248,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Input Area */}
-          <div className="bg-white p-4 border-t border-slate-100">
+          <div className="bg-white dark:bg-slate-800 p-4 border-t border-slate-100 dark:border-slate-700">
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               className="flex items-end gap-2"
@@ -263,7 +263,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                   }
                 }}
                 placeholder="Message Vertex Bot..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors resize-none max-h-32 min-h-[48px]"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:bg-slate-800 transition-colors resize-none max-h-32 min-h-[48px]"
                 rows={1}
               />
               {isLoading ? (

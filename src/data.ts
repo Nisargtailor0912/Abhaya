@@ -52,6 +52,7 @@ export const defaultSettings = {
   locationTracking: true,
   lowPowerMode: false,
   locationAccuracy: true,
+  theme: "system" as const,
 };
 export const defaultPersonalInfo = {
   fullName: 'Sarah Jenkins',

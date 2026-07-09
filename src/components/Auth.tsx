@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Sun, Moon, Settings } from 'lucide-react';
 import { auth, googleProvider, appleProvider } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, signInAnonymously } from 'firebase/auth';
 
-export default function Auth({ onAuth }: { onAuth: () => void }) {
+export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => void, theme?: 'light' | 'dark' | 'system', onThemeChange?: (theme: 'light' | 'dark' | 'system') => void }) {
   const [isLogin, setIsLogin] = useState(true);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,8 +23,8 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
       const trimmedPassword = password.trim();
 
       if (trimmedEmail === 'vertex@vertex.com' && isLogin) {
-        if (trimmedPassword !== 'vertex@091207') {
-          setError('Invalid admin credentials. Please use the exact password for the admin account: vertex@091207');
+        if (trimmedPassword !== 'vertex@123') {
+          setError('Invalid admin credentials. Please use the exact password for the admin account: vertex@123');
           setLoading(false);
           return;
         }
@@ -106,24 +106,78 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-100 via-slate-50 to-emerald-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background shapes to show off transparency */}
-      <div className="absolute -top-20 -left-20 w-96 h-96 bg-rose-200/60 rounded-full blur-3xl mix-blend-multiply"></div>
-      <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-emerald-200/60 rounded-full blur-3xl mix-blend-multiply"></div>
+    <div className="min-h-screen bg-gradient-to-br from-rose-100 via-slate-50 to-emerald-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden z-0">
+      {/* Light Mode Shapes */}
+      <div className="absolute -top-20 -left-20 w-96 h-96 bg-rose-200/60 rounded-full blur-3xl mix-blend-multiply dark:hidden"></div>
+      <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-emerald-200/60 rounded-full blur-3xl mix-blend-multiply dark:hidden"></div>
+      
+
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4 z-50 flex bg-white/30 dark:bg-slate-900/50 backdrop-blur-md rounded-full p-1 border border-white/20 dark:border-white/10">
+        <button 
+          onClick={() => onThemeChange?.('light')}
+          className={`p-2 rounded-full transition-colors ${theme === 'light' ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+        >
+          <Sun size={16} />
+        </button>
+        <button 
+          onClick={() => onThemeChange?.('dark')}
+          className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+        >
+          <Moon size={16} />
+        </button>
+        <button 
+          onClick={() => onThemeChange?.('system')}
+          className={`p-2 rounded-full transition-colors ${theme === 'system' || !theme ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+        >
+          <Settings size={16} />
+        </button>
+      </div>
+
+      {/* Dark Mode Aurora */}
+      <div className="absolute inset-0 overflow-hidden hidden dark:block -z-10 pointer-events-none">
+        <motion.div 
+          animate={{ 
+            x: [0, 100, -100, 0],
+            y: [0, -100, 100, 0],
+            scale: [1, 1.2, 0.8, 1]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -left-20 w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[100px] mix-blend-screen" 
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -150, 100, 0],
+            y: [0, 150, -100, 0],
+            scale: [1, 0.8, 1.2, 1]
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          className="absolute top-40 -right-20 w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[100px] mix-blend-screen" 
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, 100, -150, 0],
+            y: [0, -100, 150, 0],
+            scale: [1, 1.5, 0.9, 1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 left-1/4 w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-[100px] mix-blend-screen" 
+        />
+      </div>
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl overflow-hidden p-8 relative z-10"
+        className="w-full max-w-md bg-white/20 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/30 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 relative z-10"
       >
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 mb-4">
             <ShieldAlert size={32} strokeWidth={2.5} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
-          <p className="text-slate-500 text-sm mt-2 text-center">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 text-center">
             {isLogin ? 'Sign in to access your safety dashboard' : 'Join Vertex to stay safe and connected'}
           </p>
         </div>
@@ -137,11 +191,11 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Full Name</label>
               <input 
                 type="text" 
                 required
-                className="w-full bg-white/50 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+                className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
                 placeholder="Jane Doe"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
@@ -150,11 +204,11 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Email Address</label>
             <input 
               type="email" 
               required
-              className="w-full bg-white/50 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+              className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -162,12 +216,12 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Password</label>
             <input 
               type="password" 
               required
               minLength={6}
-              className="w-full bg-white/50 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+              className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -185,7 +239,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
 
         <div className="mt-6 flex items-center justify-between">
           <span className="border-b w-1/5 lg:w-1/4"></span>
-          <span className="text-xs text-center text-slate-500 uppercase">Or continue with</span>
+          <span className="text-xs text-center text-slate-500 dark:text-slate-400 uppercase">Or continue with</span>
           <span className="border-b w-1/5 lg:w-1/4"></span>
         </div>
 
@@ -193,7 +247,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           onClick={handleGoogleSignIn}
           disabled={loading}
           type="button"
-          className="w-full bg-white/50 backdrop-blur-sm border border-white/50 text-slate-700 font-semibold rounded-xl py-3 mt-4 hover:bg-white/70 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-white/40 dark:bg-slate-800/30 backdrop-blur-sm border border-white/50 text-slate-700 dark:text-slate-200 font-semibold rounded-xl py-3 mt-4 hover:bg-white dark:bg-slate-800/70 transition-colors flex items-center justify-center gap-2"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -207,7 +261,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           onClick={handleAppleSignIn}
           disabled={loading}
           type="button"
-          className="w-full bg-white/50 backdrop-blur-sm border border-white/50 text-slate-700 font-semibold rounded-xl py-3 mt-3 hover:bg-white/70 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-white/40 dark:bg-slate-800/30 backdrop-blur-sm border border-white/50 text-slate-700 dark:text-slate-200 font-semibold rounded-xl py-3 mt-3 hover:bg-white dark:bg-slate-800/70 transition-colors flex items-center justify-center gap-2"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" fill="black"/>
@@ -223,7 +277,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-sm font-medium text-slate-600 hover:text-rose-600 transition-colors"
+            className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-rose-600 transition-colors"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
