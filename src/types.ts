@@ -26,6 +26,7 @@ export interface UserSettings {
   pushNotifications: boolean;
   locationTracking: boolean;
   lowPowerMode: boolean;
+  locationAccuracy: boolean;
 }
 
 export interface PersonalInfo {
