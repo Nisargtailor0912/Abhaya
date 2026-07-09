@@ -25,6 +25,7 @@ export interface UserSettings {
   offlineSMS: boolean;
   pushNotifications: boolean;
   locationTracking: boolean;
+  lowPowerMode: boolean;
 }
 
 export interface PersonalInfo {

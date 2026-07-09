@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+const file = 'src/components/Auth.tsx';
+
+const newContent = `import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ShieldAlert } from 'lucide-react';
-import { auth, googleProvider, appleProvider } from '../firebase';
+import { auth, googleProvider } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, signInAnonymously } from 'firebase/auth';
 
 export default function Auth({ onAuth }: { onAuth: () => void }) {
@@ -51,32 +54,8 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
         setError('Invalid email or password.');
-      } else if (err.code === 'auth/operation-not-allowed') {
-        setError('Email/Password Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
       } else {
         setError(err.message || 'An error occurred during authentication.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await signInWithPopup(auth, appleProvider);
-      onAuth();
-    } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/unauthorized-domain') {
-        setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in popup was closed before completion. Please try again.');
-      } else if (err.code === 'auth/operation-not-allowed') {
-        setError('Apple Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
-      } else {
-        setError(err.message || 'An error occurred during Apple authentication.');
       }
     } finally {
       setLoading(false);
@@ -92,11 +71,9 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/unauthorized-domain') {
-        setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+        setError(\`Domain not authorized. Add \${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.\`);
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Sign-in popup was closed before completion. Please try again.');
-      } else if (err.code === 'auth/operation-not-allowed') {
-        setError('Google Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
       } else {
         setError(err.message || 'An error occurred during Google authentication.');
       }
@@ -106,15 +83,11 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-100 via-slate-50 to-emerald-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background shapes to show off transparency */}
-      <div className="absolute -top-20 -left-20 w-96 h-96 bg-rose-200/60 rounded-full blur-3xl mix-blend-multiply"></div>
-      <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-emerald-200/60 rounded-full blur-3xl mix-blend-multiply"></div>
-      
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl overflow-hidden p-8 relative z-10"
+        className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-8"
       >
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 mb-4">
@@ -141,7 +114,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
               <input 
                 type="text" 
                 required
-                className="w-full bg-white/50 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500" 
                 placeholder="Jane Doe"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
@@ -154,7 +127,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
             <input 
               type="email" 
               required
-              className="w-full bg-white/50 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500" 
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -167,7 +140,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
               type="password" 
               required
               minLength={6}
-              className="w-full bg-white/50 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500" 
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -193,7 +166,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           onClick={handleGoogleSignIn}
           disabled={loading}
           type="button"
-          className="w-full bg-white/50 backdrop-blur-sm border border-white/50 text-slate-700 font-semibold rounded-xl py-3 mt-4 hover:bg-white/70 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl py-3 mt-4 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -202,19 +175,6 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
           Google
-        </button>
-        <button 
-          onClick={handleAppleSignIn}
-          disabled={loading}
-          type="button"
-          className="w-full bg-white/50 backdrop-blur-sm border border-white/50 text-slate-700 font-semibold rounded-xl py-3 mt-3 hover:bg-white/70 transition-colors flex items-center justify-center gap-2"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" fill="black"/>
-            <path d="M13.7915 9.07185C14.2863 8.46824 14.6152 7.62002 14.5209 6.78918C13.8055 6.81831 12.9231 7.27218 12.4173 7.86971C11.9619 8.39702 11.564 9.25547 11.6702 10.076C12.4691 10.1388 13.2965 9.67576 13.7915 9.07185Z" fill="white"/>
-            <path d="M14.6146 10.366C13.5684 10.366 12.5694 11.0558 11.9644 11.0558C11.3592 11.0558 10.4908 10.4079 9.6204 10.4394C8.51341 10.4601 7.48168 11.0874 6.91428 12.0792C5.74836 14.103 6.61719 17.0984 7.74719 18.7364C8.29809 19.5358 8.94828 20.4418 9.80789 20.4093C10.6358 20.3776 10.9575 19.8665 11.9483 19.8665C12.9392 19.8665 13.2384 20.4093 14.0986 20.3776C14.9897 20.3456 15.5687 19.5467 16.0984 18.7571C16.708 17.8643 16.9579 16.9934 16.9898 16.9515C16.9579 16.9304 15.2217 16.2736 15.2217 14.3491C15.2217 12.7538 16.512 11.9701 16.574 11.9282C15.8291 10.8413 14.6766 10.366 14.6146 10.366Z" fill="white"/>
-          </svg>
-          Apple
         </button>
 
         <div className="mt-6 text-center">
@@ -232,3 +192,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
     </div>
   );
 }
+`
+
+fs.writeFileSync(file, newContent, 'utf8');
+console.log('Reverted Auth.tsx!');

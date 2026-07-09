@@ -50,6 +50,7 @@ export const defaultSettings = {
   offlineSMS: true,
   pushNotifications: true,
   locationTracking: true,
+  lowPowerMode: false,
 };
 export const defaultPersonalInfo = {
   fullName: 'Sarah Jenkins',

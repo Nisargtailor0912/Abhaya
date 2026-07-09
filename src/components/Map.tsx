@@ -11,17 +11,19 @@ const API_KEY =
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 interface LocationMapProps {
+  sosActive?: boolean;
   location: LocationData;
 }
 
-function MapUpdater({ center }: { center: { lat: number; lng: number } }) {
+function MapUpdater({ center, trigger }: { center: { lat: number; lng: number }, trigger?: number }) {
   const map = useMap();
   
   useEffect(() => {
     if (map && center.lat && center.lng) {
       map.panTo(center);
+      map.setZoom(15);
     }
-  }, [map, center]);
+  }, [map, center, trigger]);
   
   return null;
 }
@@ -41,7 +43,15 @@ function SafeRouteDirections({
   useEffect(() => {
     if (!routesLibrary || !map) return;
     setDirectionsService(new routesLibrary.DirectionsService());
-    setDirectionsRenderer(new routesLibrary.DirectionsRenderer({ map, suppressMarkers: true }));
+    setDirectionsRenderer(new routesLibrary.DirectionsRenderer({ 
+      map, 
+      suppressMarkers: true,
+      polylineOptions: {
+        strokeColor: '#10b981',
+        strokeWeight: 6,
+        strokeOpacity: 0.8
+      }
+    }));
   }, [routesLibrary, map]);
 
   useEffect(() => {
@@ -56,7 +66,7 @@ function SafeRouteDirections({
       .route({
         origin,
         destination,
-        travelMode: google.maps.TravelMode.WALKING,
+        travelMode: google.maps.TravelMode.DRIVING,
       })
       .then(response => {
         directionsRenderer.setDirections(response);
@@ -73,9 +83,10 @@ function SafeRouteDirections({
   return null;
 }
 
-export default function LocationMap({ location }: LocationMapProps) {
+export default function LocationMap({ location, sosActive }: LocationMapProps) {
   const [mapCenter, setMapCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Default to India
   const [showSafeRoute, setShowSafeRoute] = useState(false);
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
   const [safeLocation, setSafeLocation] = useState<{lat: number, lng: number} | null>(null);
   
   type SafeZoneType = 'police' | 'hospital';
@@ -96,6 +107,15 @@ export default function LocationMap({ location }: LocationMapProps) {
       });
     }
   }, [location]);
+
+
+  useEffect(() => {
+    if (sosActive && location.latitude && location.longitude && !showSafeRoute) {
+      handleToggleRoute();
+    } else if (!sosActive && showSafeRoute) {
+      handleToggleRoute(); // turn it off if sos is deactivated
+    }
+  }, [sosActive, location.latitude, location.longitude, showSafeRoute]);
 
   const handleToggleRoute = () => {
     if (!showSafeRoute && location.latitude && location.longitude) {
@@ -152,13 +172,25 @@ export default function LocationMap({ location }: LocationMapProps) {
   return (
     <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-sm border border-slate-100">
       {location.latitude && location.longitude && (
-        <button 
-          onClick={handleToggleRoute}
-          className="absolute z-10 top-4 right-4 bg-white px-4 py-2 rounded-full shadow-md text-sm font-semibold text-slate-700 flex items-center gap-2 hover:bg-slate-50 transition-colors"
-        >
-          <Navigation size={16} className={showSafeRoute ? "text-emerald-500" : "text-blue-500"} />
-          {showSafeRoute ? 'Clear Route' : 'Get Safe Route'}
-        </button>
+        <div className="absolute z-10 top-4 right-4 flex flex-col gap-2">
+          <button 
+            onClick={handleToggleRoute}
+            className="bg-white px-4 py-2 rounded-full shadow-md text-sm font-semibold text-slate-700 flex items-center gap-2 hover:bg-slate-50 transition-colors"
+          >
+            <Navigation size={16} className={showSafeRoute ? "text-emerald-500" : "text-blue-500"} />
+            {showSafeRoute ? 'Clear Route' : 'Get Safe Route'}
+          </button>
+          <button 
+            onClick={() => {
+              setMapCenter({lat: location.latitude!, lng: location.longitude!});
+              setRecenterTrigger(prev => prev + 1);
+            }}
+            className="bg-white px-4 py-2 rounded-full shadow-md text-sm font-semibold text-slate-700 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors w-fit ml-auto"
+          >
+            <Navigation size={16} className="text-slate-500" />
+            Recenter
+          </button>
+        </div>
       )}
       
       <APIProvider apiKey={API_KEY} version="weekly">
@@ -171,7 +203,7 @@ export default function LocationMap({ location }: LocationMapProps) {
           disableDefaultUI={false}
           gestureHandling="greedy"
         >
-          {!showSafeRoute && <MapUpdater center={mapCenter} />}
+          <MapUpdater center={mapCenter} trigger={recenterTrigger} />
           
           <SafeRouteDirections 
             origin={showSafeRoute && location.latitude ? { lat: location.latitude, lng: location.longitude! } : null}
