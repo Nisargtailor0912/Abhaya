@@ -22,9 +22,9 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       const trimmedEmail = email.toLowerCase().trim();
       const trimmedPassword = password.trim();
 
-      if (trimmedEmail === 'vertex@vertex.com' && isLogin) {
-        if (trimmedPassword !== 'vertex@123') {
-          setError('Invalid admin credentials. Please use the exact password for the admin account: vertex@123');
+      if (trimmedEmail === 'abhaya@abhaya.com' && isLogin) {
+        if (trimmedPassword !== 'abhaya@123') {
+          setError('Invalid admin credentials. Please use the exact password for the admin account: abhaya@123');
           setLoading(false);
           return;
         }
@@ -34,6 +34,18 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
           onAuth();
           return;
         } catch (signInErr: any) {
+          if (signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/user-not-found') {
+            try {
+              const userCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+              await updateProfile(userCredential.user, { displayName: 'Admin' });
+              onAuth();
+              return;
+            } catch (createErr: any) {
+              setError(createErr.message || 'Error creating admin account.');
+              setLoading(false);
+              return;
+            }
+          }
           setError(signInErr.message || 'Error signing in to admin account. Please ensure the admin account exists in Firebase Console.');
           setLoading(false);
           return;
@@ -178,7 +190,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 text-center">
-            {isLogin ? 'Sign in to access your safety dashboard' : 'Join Vertex to stay safe and connected'}
+            {isLogin ? 'Sign in to access your safety dashboard' : 'Join Abhaya to stay safe and connected'}
           </p>
         </div>
 

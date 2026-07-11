@@ -1,5 +1,5 @@
 {
-  "name": "Vertex",
+  "name": "Abhaya",
   "description": "Your Safety, One Tap Away. Immediate assistance during emergencies.",
   "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

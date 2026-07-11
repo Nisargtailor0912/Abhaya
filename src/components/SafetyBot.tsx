@@ -12,7 +12,7 @@ interface Message {
 
 export default function SafetyBot({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: "Hello, I'm the Vertex Bot. I'm here to offer advice, safety tips, or just listen if you need someone to talk to. How can I support you today?" }
+    { id: '1', role: 'assistant', content: "Hello, I'm the Abhaya Bot. I'm here to offer advice, safety tips, or just listen if you need someone to talk to. How can I support you today?" }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -137,7 +137,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                 <Bot size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">Vertex Bot</h3>
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">Abhaya Bot</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Companion</p>
               </div>
             </div>
@@ -161,8 +161,8 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                 >
                   <div className={`group relative rounded-2xl p-4 ${
                     msg.role === 'user' 
-                      ? 'bg-indigo-100 text-indigo-900 rounded-tr-sm' 
-                      : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-sm shadow-sm'
+                      ? 'bg-indigo-100 text-slate-900 dark:text-slate-100 rounded-tr-sm' 
+                      : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-tl-sm shadow-sm'
                   }`}>
                     {editingId === msg.id ? (
                       <div className="flex flex-col gap-2">
@@ -231,7 +231,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2 text-slate-400">
                       <Loader2 size={16} className="animate-spin" />
-                      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Vertex Bot is thinking...</span>
+                      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Abhaya Bot is thinking...</span>
                     </div>
                     <button 
                       onClick={stopGenerating}
@@ -262,8 +262,8 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                     handleSend();
                   }
                 }}
-                placeholder="Message Vertex Bot..."
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:bg-slate-800 transition-colors resize-none max-h-32 min-h-[48px]"
+                placeholder="Message Abhaya Bot..."
+                className="w-full text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-colors resize-none max-h-32 min-h-[48px]"
                 rows={1}
               />
               {isLoading ? (

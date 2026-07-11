@@ -5,6 +5,8 @@ import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import Auth from './components/Auth';
+import SlideToAnswer from './components/SlideToAnswer';
+import SlideToSOS from './components/SlideToSOS';
 import {
   ShieldAlert,
   PhoneCall,
@@ -44,6 +46,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [sosActive, setSosActive] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Fake Call States
   const [fakeCallActive, setFakeCallActive] = useState(false);
@@ -119,6 +122,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -173,43 +187,33 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!settings.locationTracking || !('geolocation' in navigator)) return;
-
-    const fetchLocation = () => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            error: null,
-          });
-        },
-        (error) => {
-          let errorMsg = error.message;
-          if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
-            errorMsg = "Poor GPS signal. Please move to an open area or enter location manually.";
-          }
-          setLocation((prev) => ({ ...prev, error: errorMsg }));
-        },
-        { enableHighAccuracy: settings.locationAccuracy !== false, timeout: 10000, maximumAge: 0 }
-      );
-    };
-
-    // Initial fetch
-    fetchLocation();
-
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    if (sosActive) {
-      // If Low Power Mode is on, refresh every 60s, otherwise every 10s
-      const intervalMs = settings.lowPowerMode ? 60000 : 10000;
-      intervalId = setInterval(fetchLocation, intervalMs);
+    if (!settings.locationTracking || !('geolocation' in navigator)) {
+      if (!('geolocation' in navigator)) {
+        setLocation(prev => ({ ...prev, error: "Geolocation not supported by device." }));
+      }
+      return;
     }
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [settings.locationTracking, sosActive, settings.lowPowerMode]);
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          error: null,
+        });
+      },
+      (error) => {
+        let errorMsg = error.message;
+        if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
+          errorMsg = "Poor GPS signal. Searching for location...";
+        }
+        setLocation((prev) => ({ ...prev, error: errorMsg }));
+      },
+      { enableHighAccuracy: settings.locationAccuracy !== false, timeout: 15000, maximumAge: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [settings.locationTracking, settings.locationAccuracy]);
 
   // Sync location to emergency doc
   useEffect(() => {
@@ -457,18 +461,24 @@ export default function App() {
     return <Auth onAuth={() => {}} theme={settings.theme} onThemeChange={(t: any) => setSettings(prev => ({...prev, theme: t}))} />;
   }
 
-  if (user?.email?.toLowerCase() === 'vertex@vertex.com') {
+  if (user?.email?.toLowerCase() === 'abhaya@abhaya.com') {
     return <AdminPortal />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-white pb-20 md:pb-0">
+    <div className="min-h-screen bg-gradient-to-br from-rose-100 via-slate-50 to-emerald-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 font-sans text-slate-900 dark:text-white pb-20 md:pb-0 relative overflow-hidden z-0">
+      {/* Glassmorphism background blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-rose-400/20 dark:bg-rose-500/10 blur-[100px] animate-pulse-slow"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-emerald-400/20 dark:bg-emerald-500/10 blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute -bottom-[10%] left-[20%] w-[60%] h-[60%] rounded-full bg-indigo-400/20 dark:bg-indigo-500/10 blur-[120px] animate-pulse-slow"></div>
+      </div>
       {/* Header */}
-      <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-20">
+      <header className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/20 dark:border-white/10 sticky top-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-rose-600">
             <ShieldAlert size={28} strokeWidth={2.5} />
-            <span className="font-bold text-xl tracking-tight">Vertex</span>
+            <span className="font-bold text-xl tracking-tight">Abhaya</span>
           </div>
           <div className="flex items-center gap-2">
             {batteryLevel !== null && (
@@ -488,11 +498,18 @@ export default function App() {
         </div>
       </header>
 
+      
+      {!isOnline && (
+        <div className="bg-rose-500 text-white text-xs font-medium px-4 py-2 text-center flex items-center justify-center gap-2 z-30 relative">
+          <WifiOff size={14} />
+          You are currently offline. Some features may be unavailable.
+        </div>
+      )}
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         
         {/* SOS Section */}
         <section className="flex flex-col items-center justify-center py-8">
-          <div className="relative">
+          <div className="relative w-full flex justify-center">
             {/* Ripple effect when active */}
             {sosActive && !settings.lowPowerMode && (
               <motion.div
@@ -502,37 +519,14 @@ export default function App() {
               />
             )}
             
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSOSClick}
-              className={`relative z-10 w-48 h-48 rounded-full flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 ${
-                sosActive 
-                  ? 'bg-rose-600 text-white shadow-rose-600/50' 
-                  : countdown !== null 
-                    ? 'bg-amber-500 text-white shadow-amber-500/50'
-                    : 'bg-gradient-to-b from-rose-500 to-rose-700 text-white shadow-rose-600/40'
-              }`}
-            >
-              {countdown !== null ? (
-                <>
-                  <span className="text-6xl font-bold mb-2">{countdown}</span>
-                  <span className="text-sm font-medium uppercase tracking-wider">Tap to cancel</span>
-                </>
-              ) : sosActive ? (
-                <>
-                  <AlertOctagon size={48} className="mb-2" />
-                  <span className="text-xl font-bold uppercase tracking-widest">Active</span>
-                  <span className="text-xs mt-1 opacity-80">Tap to stop</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-4xl font-black uppercase tracking-widest mb-1">SOS</span>
-                  <span className="text-sm font-medium opacity-90">Press & Hold</span>
-                </>
-              )}
-            </motion.button>
+            <SlideToSOS 
+              active={sosActive} 
+              countdown={countdown} 
+              onTrigger={handleSOSClick} 
+              onCancel={handleSOSClick} 
+            />
           </div>
-          <p className="mt-6 text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs">
+          <p className="mt-8 text-slate-500 dark:text-slate-400 text-sm text-center max-w-xs font-medium">
             {sosActive 
               ? 'Emergency contacts and local authorities have been notified of your location.'
               : 'Use in case of emergency. This will alert your trusted contacts and share your live location.'}
@@ -541,7 +535,7 @@ export default function App() {
 
         {/* Status Bar */}
         {(sosActive || alarmActive || location.latitude || location.error) && (
-           <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col gap-3">
+           <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/40 dark:border-white/10 transition-all duration-300 flex flex-col gap-3">
              {location.error && (
                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                  <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
@@ -778,7 +772,7 @@ export default function App() {
       </main>
 
       <footer className="text-center py-6 text-slate-400 text-xs">
-        &copy; {new Date().getFullYear()} Vertex. All rights reserved.
+        &copy; {new Date().getFullYear()} Abhaya. All rights reserved.
       </footer>
 
       {/* Settings Modal */}
@@ -1027,7 +1021,7 @@ export default function App() {
                     <li>Tap the <strong>Share</strong> button at the bottom (square with an arrow pointing up).</li>
                     <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
                     <li>Open the Shortcuts app and create a new Shortcut.</li>
-                    <li>Select "Open App" and choose Vertex.</li>
+                    <li>Select "Open App" and choose Abhaya.</li>
                     <li>Add the Shortcut widget to your lock screen or home screen for instant access!</li>
                   </ol>
                 </div>
@@ -1041,7 +1035,7 @@ export default function App() {
                     <li>Open this app in <strong>Chrome</strong>.</li>
                     <li>Tap the <strong>Menu</strong> icon (3 dots in upper right-hand corner).</li>
                     <li>Tap <strong>"Add to Home screen"</strong>.</li>
-                    <li>You can now place the Vertex app icon anywhere on your home screen.</li>
+                    <li>You can now place the Abhaya app icon anywhere on your home screen.</li>
                     <li>Long-press the icon and use <strong>Widgets</strong> to add quick action shortcuts (if supported by your launcher).</li>
                   </ol>
                 </div>
@@ -1291,32 +1285,47 @@ export default function App() {
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
-            className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-between pb-16 pt-20"
+            className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-3xl flex flex-col items-center justify-between pb-16 pt-24"
           >
+            {/* iOS Glass Background Blob */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+               <div className="absolute top-[10%] left-[20%] w-64 h-64 bg-emerald-500/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+               <div className="absolute bottom-[20%] right-[10%] w-80 h-80 bg-blue-500/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+            </div>
+
             <div className="text-center">
               {fakeCallState === 'incoming' ? (
-                <p className="text-slate-400 text-lg mb-2 animate-pulse">Incoming call...</p>
+                <p className="text-white/60 text-xl mb-2 font-light">incoming call...</p>
               ) : (
-                <p className="text-emerald-400 text-lg mb-2">00:{fakeCallTime.toString().padStart(2, '0')}</p>
+                <p className="text-emerald-400 text-xl mb-2 font-medium">00:{fakeCallTime.toString().padStart(2, '0')}</p>
               )}
-              <h2 className="text-white text-4xl font-light tracking-wide">Dad</h2>
-              <p className="text-slate-400 mt-2">Mobile</p>
+              <h2 className="text-white text-5xl font-light tracking-wide mt-2">Dad</h2>
+              <p className="text-white/50 text-lg mt-2">Mobile</p>
             </div>
             
-            <div className="flex items-center justify-center gap-16 w-full px-10">
-              <button 
-                onClick={endFakeCall}
-                className="w-16 h-16 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20"
-              >
-                <Phone size={28} className="rotate-[135deg]" />
-              </button>
-              
-              {fakeCallState === 'incoming' && (
+            <div className="w-full px-8 pb-12 flex flex-col items-center justify-end">
+              {fakeCallState === 'incoming' ? (
+                <div className="w-full flex flex-col items-center gap-8">
+                   <div className="flex w-full max-w-sm justify-between px-6 mb-8">
+                     <div className="flex flex-col items-center gap-2">
+                       <button onClick={endFakeCall} className="w-16 h-16 rounded-full bg-rose-500/80 backdrop-blur-md flex items-center justify-center text-white -rose transition-all">
+                         <Phone size={28} className="rotate-[135deg]" />
+                       </button>
+                       <span className="text-white/70 text-sm">Decline</span>
+                     </div>
+                     <div className="flex flex-col items-center gap-2 opacity-0">
+                       {/* Placeholder to balance the layout if we needed two buttons, but we only have decline and slider */}
+                     </div>
+                   </div>
+                   
+                   <SlideToAnswer onAccept={acceptFakeCall} />
+                </div>
+              ) : (
                 <button 
-                  onClick={acceptFakeCall}
-                  className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20"
+                  onClick={endFakeCall}
+                  className="w-[72px] h-[72px] rounded-full bg-rose-500/90 backdrop-blur-md flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] -rose transition-all mt-auto"
                 >
-                  <Phone size={28} className="animate-pulse" />
+                  <Phone size={36} className="rotate-[135deg]" />
                 </button>
               )}
             </div>
