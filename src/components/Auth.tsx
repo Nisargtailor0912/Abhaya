@@ -80,7 +80,9 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       await signInWithPopup(auth, appleProvider);
       onAuth();
     } catch (err: any) {
-      console.error(err);
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        console.error(err);
+      }
       if (err.code === 'auth/unauthorized-domain') {
         setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
@@ -102,7 +104,9 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       await signInWithPopup(auth, googleProvider);
       onAuth();
     } catch (err: any) {
-      console.error(err);
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        console.error(err);
+      }
       if (err.code === 'auth/unauthorized-domain') {
         setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
       } else if (err.code === 'auth/popup-closed-by-user') {

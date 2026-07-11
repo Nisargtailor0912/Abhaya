@@ -353,17 +353,22 @@ export default function App() {
     
     const smsLink = document.createElement('a');
     smsLink.href = `sms:${smsPhones}?body=${message}`;
-    smsLink.target = '_blank';
+    smsLink.target = '_top';
     document.body.appendChild(smsLink);
     smsLink.click();
     document.body.removeChild(smsLink);
     
     setTimeout(() => {
-        window.location.href = `tel:${emergencyNumber}`;
+        const telLink = document.createElement('a');
+        telLink.href = `tel:${emergencyNumber}`;
+        telLink.target = '_top';
+        document.body.appendChild(telLink);
+        telLink.click();
+        document.body.removeChild(telLink);
     }, 500);
 
     const contactNames = contacts.length > 0 ? contacts.map(c => c.name).join(', ') : 'No trusted contacts saved';
-    alert(`EMERGENCY ALERTS DISPATCHED!\n\nAutomated SMS sent with your live location to:\n- Local Police Station (100)\n- Cyber Cell (1930)\n- Trusted Contacts: ${contactNames}\n\n🚨 CRITICAL ALERT INITIATED:\nA loud emergency siren has been triggered on the devices of your trusted contacts to ensure immediate attention.\n\nA secure call log has been created in the Admin Portal.`);
+    alert(`EMERGENCY SOS ACTIVATED!\n\n1. Request sent to Admin Portal.\n2. Notifying Trusted Contacts (${contactNames}) with a high-priority alert ringtone call.\n3. SMS messages dispatched with your live location link.\n\nStay calm. Help is on the way.`);
 
     // Simulate Offline SMS notification if enabled and network is down
     if (settings.offlineSMS && !navigator.onLine) {
@@ -375,7 +380,60 @@ export default function App() {
     setCountdown(null);
   };
 
-  const toggleAlarm = () => {
+  
+  const ringAudioCtxRef = useRef<AudioContext | null>(null);
+  const ringIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (fakeCallActive && fakeCallState === 'incoming') {
+      if (!ringAudioCtxRef.current) {
+        ringAudioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = ringAudioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const playRing = () => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(440, ctx.currentTime);
+        osc2.frequency.setValueAtTime(480, ctx.currentTime);
+        
+        // standard ringing pattern: 2 seconds on, 4 seconds off. We'll do 1.5s on, 2s off.
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + 1.4);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
+        osc1.start(ctx.currentTime);
+        osc2.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 1.5);
+        osc2.stop(ctx.currentTime + 1.5);
+      };
+      
+      playRing();
+      ringIntervalRef.current = setInterval(playRing, 3500);
+      
+    } else {
+       if (ringIntervalRef.current) {
+         clearInterval(ringIntervalRef.current);
+         ringIntervalRef.current = null;
+       }
+    }
+    
+    return () => {
+      if (ringIntervalRef.current) {
+         clearInterval(ringIntervalRef.current);
+         ringIntervalRef.current = null;
+       }
+    };
+  }, [fakeCallActive, fakeCallState]);
+
+const toggleAlarm = () => {
     const nextState = !alarmActive;
     setAlarmActive(nextState);
     
@@ -700,7 +758,7 @@ export default function App() {
                       <p className="text-sm text-slate-500 dark:text-slate-400">{contact.relation} • {contact.phone}</p>
                     </div>
                   </div>
-                  <a href={`tel:${contact.phone}`} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
+                  <a href={`tel:${contact.phone}`} target="_top" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
                     <Phone size={18} />
                   </a>
                 </div>
@@ -1086,7 +1144,7 @@ export default function App() {
                   {emergencyNumbersIndia.map((item, idx) => (
                     <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:bg-slate-900 transition-colors">
                       <span className="font-medium text-slate-700 dark:text-slate-200">{item.service}</span>
-                      <a href={`tel:${item.number}`} className="flex items-center gap-2 text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full">
+                      <a href={`tel:${item.number}`} target="_top" className="flex items-center gap-2 text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full">
                         <PhoneCall size={14} />
                         {item.number}
                       </a>

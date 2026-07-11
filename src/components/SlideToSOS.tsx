@@ -61,10 +61,11 @@ export default function SlideToSOS({ onTrigger, active, countdown, onCancel }: {
           dragConstraints={{ left: 0, right: maxDrag > 0 ? maxDrag : 200 }}
           dragSnapToOrigin={true}
           onDragEnd={(e, info) => {
-            if (info.offset.x > maxDrag * 0.8) {
+            if (info.offset.x > maxDrag * 0.5) {
               onTrigger();
             }
           }}
+          style={{ touchAction: "none" }}
           className="w-[80px] h-[80px] bg-gradient-to-br from-rose-500 to-rose-700 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing z-10 shadow-[0_0_20px_rgba(244,63,94,0.6)]"
         >
           <AlertOctagon size={40} className="text-white drop-shadow-md" />
