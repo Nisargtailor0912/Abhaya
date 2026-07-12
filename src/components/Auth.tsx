@@ -86,7 +86,11 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       if (err.code === 'auth/unauthorized-domain') {
         setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in popup was closed before completion. Please try again.');
+        if (window.self !== window.top) {
+          setError('Google Sign-In popup was blocked by your browser. Please click the ↗️ "Open in new tab" button at the top right of the preview to sign in.');
+        } else {
+          setError('Sign-in popup was closed before completion. Please try again.');
+        }
       } else if (err.code === 'auth/operation-not-allowed') {
         setError('Apple Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
       } else {
@@ -110,7 +114,11 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       if (err.code === 'auth/unauthorized-domain') {
         setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in popup was closed before completion. Please try again.');
+        if (window.self !== window.top) {
+          setError('Apple Sign-In popup was blocked by your browser. Please click the ↗️ "Open in new tab" button at the top right of the preview to sign in.');
+        } else {
+          setError('Sign-in popup was closed before completion. Please try again.');
+        }
       } else if (err.code === 'auth/operation-not-allowed') {
         setError('Google Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
       } else {

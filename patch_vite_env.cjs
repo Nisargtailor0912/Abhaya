@@ -1,4 +1,6 @@
+const fs = require('fs');
 
+const viteConfigContent = `
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -32,3 +34,7 @@ export default defineConfig(({ mode }) => {
     ]
   };
 });
+`;
+
+fs.writeFileSync('vite.config.ts', viteConfigContent);
+console.log("Patched vite.config.ts to support multiple env variable names for Google Maps");

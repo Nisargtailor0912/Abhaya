@@ -519,7 +519,6 @@ const toggleAlarm = () => {
     return <Auth onAuth={() => {}} theme={settings.theme} onThemeChange={(t: any) => setSettings(prev => ({...prev, theme: t}))} />;
   }
 
-
   if (user?.email?.toLowerCase() === 'abhaya@abhaya.com') {
     return <AdminPortal />;
   }

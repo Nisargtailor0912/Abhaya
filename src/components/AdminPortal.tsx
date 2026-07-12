@@ -6,7 +6,7 @@ import { signOut } from 'firebase/auth';
 import { ShieldAlert, LogOut, MapPin, CheckCircle, Clock, PhoneCall, MessageCircle, User as UserIcon, History, AlertTriangle, PhoneForwarded, ShieldCheck, Lock, Server, Activity, EyeOff } from 'lucide-react';
 import { APIProvider, Map, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 
-const API_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY || (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY || '';
+const API_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY || '';
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 function AdminSafeRouteDirections({ origin, destination }: { origin: { lat: number; lng: number } | null; destination: { lat: number; lng: number } | null; }) {
