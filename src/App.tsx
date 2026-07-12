@@ -1314,17 +1314,32 @@ const toggleAlarm = () => {
               
               <div className="p-8 flex flex-col items-center justify-center space-y-6">
                 <div className="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 inline-block">
-                  <QRCode 
-                    value={JSON.stringify({
+                  
+                <a 
+                  href={`https://ais-pre-kvi7qwysow2ue3pe6is2n4-422275091489.asia-southeast1.run.app/?medicalData=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({
                       name: personalInfo.fullName,
                       phone: personalInfo.phone,
                       blood: personalInfo.bloodGroup,
                       conditions: personalInfo.medicalConditions,
                       note: personalInfo.emergencyNote
-                    })} 
+                    }))))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block cursor-pointer"
+                >
+                  <QRCode 
+                    value={`https://ais-pre-kvi7qwysow2ue3pe6is2n4-422275091489.asia-southeast1.run.app/?medicalData=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({
+                      name: personalInfo.fullName,
+                      phone: personalInfo.phone,
+                      blood: personalInfo.bloodGroup,
+                      conditions: personalInfo.medicalConditions,
+                      note: personalInfo.emergencyNote
+                    }))))}`} 
                     size={200}
                     style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                   />
+                </a>
+
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{personalInfo.fullName}</p>
