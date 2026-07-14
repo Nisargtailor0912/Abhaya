@@ -7,7 +7,6 @@ import { auth, db } from './firebase';
 import Auth from './components/Auth';
 import SlideToAnswer from './components/SlideToAnswer';
 import SlideToSOS from './components/SlideToSOS';
-import TiltWrapper from './components/TiltWrapper';
 import {
   ShieldAlert,
   PhoneCall,
@@ -50,6 +49,8 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [sosActive, setSosActive] = useState(false);
+  const sosActiveRef = useRef(sosActive);
+  useEffect(() => { sosActiveRef.current = sosActive; }, [sosActive]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Fake Call States
@@ -60,6 +61,8 @@ export default function App() {
   const [alarmActive, setAlarmActive] = useState(false);
   const [location, setLocation] = useState<LocationData>({ latitude: null, longitude: null, error: null });
   const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef(countdown);
+  useEffect(() => { countdownRef.current = countdown; }, [countdown]);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isCharging, setIsCharging] = useState<boolean | null>(null);
   
@@ -237,7 +240,7 @@ export default function App() {
   // Shake detection
   useEffect(() => {
     if (!settings.shakeToTriggerSOS) return;
-    if (sosActive && settings.lowPowerMode) return; // Disable background process to save battery
+    if (sosActiveRef.current && settings.lowPowerMode) return; // Disable background process to save battery
 
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastTime = new Date().getTime();
@@ -259,7 +262,7 @@ export default function App() {
             (deltaX > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD) || 
             (deltaY > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD)) {
           
-          if (!sosActive && countdown === null) {
+          if (!sosActiveRef.current && countdownRef.current === null) {
             handleSOSClick(); // Trigger SOS
           }
         }
@@ -273,7 +276,7 @@ export default function App() {
 
     window.addEventListener('devicemotion', handleMotion);
     return () => window.removeEventListener('devicemotion', handleMotion);
-  }, [settings.shakeToTriggerSOS, sosActive, countdown, settings.lowPowerMode]);
+  }, [settings.shakeToTriggerSOS, settings.lowPowerMode]); // Use refs to avoid rebinding 60 times a second
 
   useEffect(() => {
     if (countdown === null) return;
@@ -537,6 +540,21 @@ const toggleAlarm = () => {
     setFakeCallActive(false);
   };
 
+const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch(err) {}
+    localStorage.removeItem("localMockAuth");
+    setLocalMock(false);
+    setUser(null);
+    setShowSettings(false);
+    setShowProfile(false);
+  };
+
+  const [botMessages, setBotMessages] = useState<any[]>([
+    { id: '1', role: 'assistant', content: "Hello, I'm the Abhaya Bot. I'm here to offer advice, safety tips, or just listen if you need someone to talk to. How can I support you today?" }
+  ]);
+
   const toggleSetting = (key: keyof UserSettings) => {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
@@ -551,7 +569,6 @@ const toggleAlarm = () => {
     return <Auth onAuth={() => { setLocalMock(true); localStorage.setItem("localMockAuth", "true"); }} theme={settings.theme} onThemeChange={(t: any) => setSettings(prev => ({...prev, theme: t}))} />;
   }
 
-
   if (user?.email?.toLowerCase() === 'abhaya@abhaya.com') {
     return <AdminPortal />;
   }
@@ -562,16 +579,11 @@ const toggleAlarm = () => {
 
   return (
     <>
-    <TiltWrapper maxRotation={3} className="min-h-screen w-full">
-<div className="min-h-screen bg-gradient-to-br from-rose-100 via-slate-50 to-emerald-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 font-sans text-slate-900 dark:text-white pb-20 md:pb-0 relative z-0 overflow-x-hidden" style={{ transformStyle: "preserve-3d" }}>
-      {/* Glassmorphism background blobs */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-rose-400/20 dark:bg-rose-500/10 blur-[100px] animate-pulse-slow"></div>
-        <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-emerald-400/20 dark:bg-emerald-500/10 blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute -bottom-[10%] left-[20%] w-[60%] h-[60%] rounded-full bg-indigo-400/20 dark:bg-indigo-500/10 blur-[120px] animate-pulse-slow"></div>
-      </div>
+    
+<div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white pb-20 md:pb-0 relative z-0">
+
       {/* Header */}
-      <header className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/20 dark:border-white/10 sticky top-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.05)]" style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-rose-600">
             <ShieldAlert size={28} strokeWidth={2.5} />
@@ -602,11 +614,11 @@ const toggleAlarm = () => {
           You are currently offline. Some features may be unavailable.
         </div>
       )}
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-8" style={{ transformStyle: "preserve-3d" }}>
+      <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         
         {/* SOS Section */}
         
-<section className="flex flex-col items-center justify-center py-8" style={{ transform: "translateZ(60px)", transformStyle: "preserve-3d" }}>
+<section className="flex flex-col items-center justify-center py-8">
           <div className="relative w-full flex justify-center">
             {/* Ripple effect when active */}
             {sosActive && !settings.lowPowerMode && (
@@ -634,7 +646,7 @@ const toggleAlarm = () => {
         {/* Status Bar */}
         {(sosActive || alarmActive || location.latitude || location.error) && (
 
-           <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/40 dark:border-white/10 transition-all duration-300 flex flex-col gap-3" style={{ transform: "translateZ(40px)" }}>
+           <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col gap-3">
              {location.error && (
                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                  <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
@@ -690,7 +702,7 @@ const toggleAlarm = () => {
 
         
         {/* System Security */}
-        <section style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+        <section>
           <div className="flex items-center justify-between mb-4 px-1">
              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">System Security</h2>
           </div>
@@ -718,39 +730,40 @@ const toggleAlarm = () => {
         </section>
 
         {/* Quick Actions */}
-        <section style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+        <section>
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4 px-1">Quick Tools</h2>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => {
               const isActive = action.id === 'alarm' && alarmActive;
               return (
-                <TiltWrapper key={action.id} maxRotation={5} className="w-full">
+                
                   <button
+                    key={action.id}
                     onClick={() => {
                       if (action.id === 'alarm') toggleAlarm();
                       if (action.id === 'fake-call') triggerFakeCall();
                       if (action.id === 'medical-qr') setShowMedicalQR(true);
                     }}
-                    style={{ transform: "translateZ(15px)" }}
+                   
                     className={`w-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
                       isActive 
-                        ? 'border-orange-500 bg-orange-50 shadow-[0_8px_16px_rgba(249,115,22,0.2)] scale-105' 
-                        : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:scale-105'
+                        ? 'border-orange-500 bg-orange-50' 
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 hover:shadow-sm'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${action.color}`} style={{ transform: "translateZ(20px)" }}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${action.color}`}>
                       <action.icon size={24} />
                     </div>
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200 text-center" style={{ transform: "translateZ(10px)" }}>{action.title}</span>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200 text-center">{action.title}</span>
                   </button>
-                </TiltWrapper>
+                
               )
             })}
           </div>
         </section>
 
         {/* Live Location Map */}
-        <section style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+        <section>
           <div className="flex items-center justify-between mb-4 px-1">
              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Live Location</h2>
           </div>
@@ -758,7 +771,7 @@ const toggleAlarm = () => {
         </section>
 
         {/* Trusted Contacts */}
-        <section style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+        <section>
           <div className="flex items-center justify-between mb-4 px-1">
              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Trusted Contacts</h2>
              <button onClick={() => setShowAddContact(true)} className="text-sm font-medium text-rose-600 hover:text-rose-700">Add Contact</button>
@@ -821,7 +834,7 @@ const toggleAlarm = () => {
         </section>
 
         {/* Safety Tips */}
-        <section className="bg-blue-50 rounded-2xl p-5 border border-blue-100" style={{ transform: "translateZ(40px)" }}>
+        <section className="bg-blue-50 rounded-2xl p-5 border border-blue-100">
           <div className="flex items-center gap-2 text-blue-800 mb-3">
             <Info size={20} />
             <h2 className="font-semibold">Safety Tips</h2>
@@ -882,20 +895,20 @@ const toggleAlarm = () => {
 
       </main>
 
-      <footer className="text-center py-6 text-slate-400 text-xs" style={{ transform: "translateZ(10px)" }}>
+      <footer className="text-center py-6 text-slate-400 text-xs">
         &copy; {new Date().getFullYear()} Abhaya. All rights reserved.
       </footer>
 
       {/* Settings Modal */}
     </div>
-</TiltWrapper>
+
       <AnimatePresence>
         {showSettings && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1052,11 +1065,12 @@ const toggleAlarm = () => {
                           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                         </label>
                       </div>
+
                     </div>
                   </div>
                 <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
                   <button 
-                    onClick={() => { setShowSettings(false); signOut(auth).then(() => window.location.reload()); }} 
+                    onClick={handleLogout} 
                     className="w-full flex items-center justify-center gap-2 p-3 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors font-medium"
                   >
                     <LogOut size={20} />
@@ -1077,7 +1091,7 @@ const toggleAlarm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1121,7 +1135,7 @@ const toggleAlarm = () => {
                   <Smartphone size={20} className="text-slate-400" />
                   Add Panic Widget
                 </button>
-                <button onClick={() => { setShowProfile(false); signOut(auth).then(() => window.location.reload()); }} className="w-full flex items-center gap-3 p-4 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium mt-4">
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium mt-4">
                   <LogOut size={20} className="text-rose-400" />
                   Sign Out
                 </button>
@@ -1139,7 +1153,7 @@ const toggleAlarm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1210,7 +1224,7 @@ const toggleAlarm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1250,7 +1264,7 @@ const toggleAlarm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1322,7 +1336,7 @@ const toggleAlarm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1382,7 +1396,7 @@ const toggleAlarm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1444,13 +1458,9 @@ const toggleAlarm = () => {
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
-            className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-3xl flex flex-col items-center justify-between pb-16 pt-24"
+            className="fixed inset-0 z-50 bg-slate-900/60  flex flex-col items-center justify-between pb-16 pt-24"
           >
-            {/* iOS Glass Background Blob */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-               <div className="absolute top-[10%] left-[20%] w-64 h-64 bg-emerald-500/20 rounded-full blur-[100px] animate-pulse-slow"></div>
-               <div className="absolute bottom-[20%] right-[10%] w-80 h-80 bg-blue-500/20 rounded-full blur-[120px] animate-pulse-slow"></div>
-            </div>
+
 
             <div className="text-center">
               {fakeCallState === 'incoming' ? (
@@ -1467,7 +1477,7 @@ const toggleAlarm = () => {
                 <div className="w-full flex flex-col items-center gap-8">
                    <div className="flex w-full max-w-sm justify-between px-6 mb-8">
                      <div className="flex flex-col items-center gap-2">
-                       <button onClick={endFakeCall} className="w-16 h-16 rounded-full bg-rose-500/80 backdrop-blur-md flex items-center justify-center text-white -rose transition-all">
+                       <button onClick={endFakeCall} className="w-16 h-16 rounded-full bg-rose-500/80  flex items-center justify-center text-white -rose transition-all">
                          <Phone size={28} className="rotate-[135deg]" />
                        </button>
                        <span className="text-white/70 text-sm">Decline</span>
@@ -1482,7 +1492,7 @@ const toggleAlarm = () => {
               ) : (
                 <button 
                   onClick={endFakeCall}
-                  className="w-[72px] h-[72px] rounded-full bg-rose-500/90 backdrop-blur-md flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] -rose transition-all mt-auto"
+                  className="w-[72px] h-[72px] rounded-full bg-rose-500/90  flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] -rose transition-all mt-auto"
                 >
                   <Phone size={36} className="rotate-[135deg]" />
                 </button>
@@ -1493,7 +1503,7 @@ const toggleAlarm = () => {
       </AnimatePresence>
 
       {/* Safety Bot */}
-      {showBot && <SafetyBot onClose={() => setShowBot(false)} />}
+      {showBot && <SafetyBot onClose={() => setShowBot(false)} messages={botMessages} setMessages={setBotMessages} />}
       
       {/* Floating Action Button for Bot */}
       <button

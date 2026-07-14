@@ -1,4 +1,3 @@
-import TiltWrapper from './TiltWrapper';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bot, Send, X, Loader2, ThumbsUp, ThumbsDown, StopCircle, Edit2, Check } from 'lucide-react';
@@ -11,10 +10,8 @@ interface Message {
   feedback?: 'up' | 'down' | null;
 }
 
-export default function SafetyBot({ onClose }: { onClose: () => void }) {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: "Hello, I'm the Abhaya Bot. I'm here to offer advice, safety tips, or just listen if you need someone to talk to. How can I support you today?" }
-  ]);
+export default function SafetyBot({ onClose, messages, setMessages }: { onClose: () => void, messages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>> }) {
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -122,19 +119,19 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex justify-center items-end sm:items-center p-0 sm:p-4"
+        className="fixed inset-0 z-[60] bg-slate-900/40  flex justify-center items-end sm:items-center p-0 sm:p-4"
       >
-        <TiltWrapper maxRotation={2} className="w-full max-w-md">
+        
         <motion.div
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: "spring", bounce: 0, duration: 0.4 }}
           className="bg-slate-50 dark:bg-slate-900 w-full rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden max-h-[90vh] sm:h-[600px] shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
-          style={{ transformStyle: "preserve-3d" }}
+         
         >
           {/* Header */}
-          <div className="bg-white dark:bg-slate-800 px-5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 shadow-sm z-10" style={{ transform: "translateZ(30px)" }}>
+          <div className="bg-white dark:bg-slate-800 px-5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 shadow-sm z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
                 <Bot size={20} />
@@ -164,7 +161,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                 >
                   <div className={`group relative rounded-2xl p-4 ${
                     msg.role === 'user' 
-                      ? 'bg-indigo-100 text-slate-900 dark:text-slate-100 rounded-tr-sm' 
+                      ? 'bg-indigo-600 text-white rounded-tr-sm shadow-sm' 
                       : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-tl-sm shadow-sm'
                   }`}>
                     {editingId === msg.id ? (
@@ -193,7 +190,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
                       </div>
                     ) : (
                       <>
-                        <div className="text-[15px] leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none [&>p]:mb-0 [&>p]:mt-0">
+                        <div className={`text-[15px] leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none [&>p]:mb-0 [&>p]:mt-0 ${msg.role === "user" ? "text-white prose-p:text-white prose-strong:text-white" : ""}`}>
                           <Markdown>{msg.content}</Markdown>
                         </div>
                         {msg.role === 'user' && !isLoading && (
@@ -289,7 +286,7 @@ export default function SafetyBot({ onClose }: { onClose: () => void }) {
             </form>
           </div>
         </motion.div>
-        </TiltWrapper>
+        
       </motion.div>
     </AnimatePresence>
   );

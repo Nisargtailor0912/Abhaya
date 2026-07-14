@@ -1,4 +1,3 @@
-import TiltWrapper from './TiltWrapper';
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ShieldAlert, Sun, Moon, Settings } from 'lucide-react';
@@ -129,7 +128,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       
 
       {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-50 flex bg-white/30 dark:bg-slate-900/50 backdrop-blur-md rounded-full p-1 border border-white/20 dark:border-white/10">
+      <div className="absolute top-4 right-4 z-50 flex bg-white/30 dark:bg-slate-900/50  rounded-full p-1 border border-white/20 dark:border-white/10">
         <button 
           onClick={() => onThemeChange?.('light')}
           className={`p-2 rounded-full transition-colors ${theme === 'light' ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
@@ -152,39 +151,15 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
 
       {/* Dark Mode Aurora */}
       <div className="absolute inset-0 overflow-hidden hidden dark:block -z-10 pointer-events-none">
-        <motion.div 
-          animate={{ 
-            x: [0, 100, -100, 0],
-            y: [0, -100, 100, 0],
-            scale: [1, 1.2, 0.8, 1]
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-40 -left-20 w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[100px] mix-blend-screen" 
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, -150, 100, 0],
-            y: [0, 150, -100, 0],
-            scale: [1, 0.8, 1.2, 1]
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          className="absolute top-40 -right-20 w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[100px] mix-blend-screen" 
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, 100, -150, 0],
-            y: [0, -100, 150, 0],
-            scale: [1, 1.5, 0.9, 1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-40 left-1/4 w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-[100px] mix-blend-screen" 
-        />
+        
+        
+        
       </div>
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white/20 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/30 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 relative z-10"
+        className="w-full max-w-md bg-white/20 dark:bg-slate-900/40  border border-white/30 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 relative z-10"
       >
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 mb-4">
@@ -211,7 +186,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
               <input 
                 type="text" 
                 required
-                className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+                className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 " 
                 placeholder="Jane Doe"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
@@ -224,7 +199,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
             <input 
               type="email" 
               required
-              className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+              className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 " 
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -237,7 +212,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
               type="password" 
               required
               minLength={6}
-              className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 backdrop-blur-sm" 
+              className="w-full bg-white/40 dark:bg-slate-800/30 border border-white/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 " 
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -263,7 +238,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
           onClick={handleGoogleSignIn}
           disabled={loading}
           type="button"
-          className="w-full bg-white/40 dark:bg-slate-800/30 backdrop-blur-sm border border-white/50 text-slate-700 dark:text-slate-200 font-semibold rounded-xl py-3 mt-4 hover:bg-white dark:bg-slate-800/70 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-white/40 dark:bg-slate-800/30  border border-white/50 text-slate-700 dark:text-slate-200 font-semibold rounded-xl py-3 mt-4 hover:bg-white dark:bg-slate-800/70 transition-colors flex items-center justify-center gap-2"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -279,7 +254,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
           onClick={handleGuestSignIn}
           disabled={loading}
           type="button"
-          className="w-full bg-slate-800/80 dark:bg-slate-700/80 backdrop-blur-sm border border-slate-700 text-white font-semibold rounded-xl py-3 mt-3 hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-slate-800/80 dark:bg-slate-700/80  border border-slate-700 text-white font-semibold rounded-xl py-3 mt-3 hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           Continue as Guest

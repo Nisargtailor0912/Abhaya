@@ -1,4 +1,3 @@
-import TiltWrapper from './TiltWrapper';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { Phone } from 'lucide-react';
@@ -18,9 +17,9 @@ export default function SlideToAnswer({ onAccept }: { onAccept: () => void }) {
   const maxDrag = containerWidth > 0 ? containerWidth - buttonSize - padding * 2 : 200;
 
   return (
-    <TiltWrapper className="w-full max-w-sm"><div 
+    <div 
       ref={containerRef}
-      className="relative w-full max-w-sm h-20 bg-white/20 dark:bg-slate-800/40 backdrop-blur-2xl rounded-full border border-white/30 dark:border-white/10 overflow-hidden flex items-center px-2"
+      className="relative w-full max-w-sm h-20 bg-emerald-100 dark:bg-emerald-900/50  rounded-full border border-emerald-200 dark:border-emerald-800 overflow-hidden flex items-center px-2"
     >
       {/* Shimmer Text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -38,11 +37,11 @@ export default function SlideToAnswer({ onAccept }: { onAccept: () => void }) {
             onAccept();
           }
         }}
-        style={{ touchAction: "none", transform: "translateZ(30px)" }}
+        style={{ touchAction: "none" }}
         className="w-[72px] h-[72px] bg-white rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing z-10 shadow-[0_0_20px_rgba(255,255,255,0.4)]"
       >
         <Phone size={32} className="text-emerald-500 animate-pulse" />
       </motion.div>
-    </div></TiltWrapper>
+    </div>
   );
 }

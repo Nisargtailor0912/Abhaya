@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.GOOGLE_MAPS_PLATFORM_KEY': JSON.stringify(googleMapsKey)
     },
+    server: { hmr: false },
     plugins: [
       react(),
       tailwindcss(),
@@ -26,7 +27,18 @@ export default defineConfig(({ mode }) => {
           short_name: 'Abhaya',
           description: 'Women Safety Alert App',
           theme_color: '#ffffff',
-          icons: []
+          icons: [
+            {
+              src: 'https://cdn-icons-png.flaticon.com/512/3204/3204018.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'https://cdn-icons-png.flaticon.com/512/3204/3204018.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
         }
       })
     ]
