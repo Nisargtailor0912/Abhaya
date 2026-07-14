@@ -167,7 +167,7 @@ export default function AdminPortal() {
           </div>
 
           <button 
-            onClick={() => signOut(auth)}
+            onClick={() => signOut(auth).then(() => window.location.reload())}
             className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm font-medium bg-slate-800 px-3 py-1.5 rounded-lg"
           >
             <LogOut size={16} />

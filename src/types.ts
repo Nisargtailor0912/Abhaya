@@ -28,6 +28,9 @@ export interface UserSettings {
   lowPowerMode: boolean;
   locationAccuracy: boolean;
   theme?: "light" | "dark" | "system";
+  stealthMode?: boolean;
+  stealthPIN?: string;
+  blurSensitiveInfo?: boolean;
 }
 
 export interface PersonalInfo {

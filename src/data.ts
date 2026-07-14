@@ -53,6 +53,9 @@ export const defaultSettings = {
   lowPowerMode: false,
   locationAccuracy: true,
   theme: "system" as const,
+  stealthMode: false,
+  stealthPIN: "1234",
+  blurSensitiveInfo: false,
 };
 export const defaultPersonalInfo = {
   fullName: 'Sarah Jenkins',

@@ -21,6 +21,7 @@ export default function SlideToSOS({ onTrigger, active, countdown, onCancel }: {
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={onCancel}
+        style={{ transform: "translateZ(40px)" }}
         className={`relative w-64 h-64 rounded-full flex flex-col items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.1)] transition-all duration-300 backdrop-blur-2xl border border-white/20 dark:border-white/10 ${
           active 
             ? 'bg-rose-500/80 text-white' 
@@ -44,10 +45,10 @@ export default function SlideToSOS({ onTrigger, active, countdown, onCancel }: {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full">
+    <div className="flex flex-col items-center justify-center w-full" style={{ transformStyle: "preserve-3d" }}>
       <div 
         ref={containerRef}
-        className="relative w-full max-w-sm h-24 bg-rose-500/20 dark:bg-rose-900/30 backdrop-blur-2xl rounded-full border border-rose-500/30 overflow-hidden flex items-center px-2 shadow-[0_8px_32px_rgba(244,63,94,0.15)]"
+        className="relative w-full max-w-sm h-24 bg-rose-500/20 dark:bg-rose-900/30 backdrop-blur-2xl rounded-full border border-rose-500/30 overflow-hidden flex items-center px-2 shadow-[0_8px_32px_rgba(244,63,94,0.15)]" style={{ transformStyle: "preserve-3d", transform: "translateZ(20px)" }}
       >
         {/* Shimmer Text */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -57,6 +58,7 @@ export default function SlideToSOS({ onTrigger, active, countdown, onCancel }: {
         </div>
 
         <motion.div
+          style={{ touchAction: "none", transform: "translateZ(30px)" }}
           drag="x"
           dragConstraints={{ left: 0, right: maxDrag > 0 ? maxDrag : 200 }}
           dragSnapToOrigin={true}
@@ -65,7 +67,6 @@ export default function SlideToSOS({ onTrigger, active, countdown, onCancel }: {
               onTrigger();
             }
           }}
-          style={{ touchAction: "none" }}
           className="w-[80px] h-[80px] bg-gradient-to-br from-rose-500 to-rose-700 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing z-10 shadow-[0_0_20px_rgba(244,63,94,0.6)]"
         >
           <AlertOctagon size={40} className="text-white drop-shadow-md" />

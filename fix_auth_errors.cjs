@@ -1,25 +1,17 @@
 const fs = require('fs');
-const file = 'src/components/Auth.tsx';
-let content = fs.readFileSync(file, 'utf8');
 
-const targetGoogleCatch = `      if (err.code === 'auth/unauthorized-domain') {
-        setError(\`Domain not authorized. Add \${window.location.hostname} to Firebase Console > Authentication > Settings > Authorized domains.\`);
-      } else {
-        setError(err.message || 'An error occurred during Google authentication.');
-      }`;
+let content = fs.readFileSync('src/components/Auth.tsx', 'utf8');
 
-const newGoogleCatch = `      if (err.code === 'auth/unauthorized-domain') {
-        setError(\`Domain not authorized. Add \${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.\`);
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in popup was closed before completion. Please try again.');
-      } else {
-        setError(err.message || 'An error occurred during Google authentication.');
-      }`;
+// The error messages for popup blocked are swapped for Apple and Google
+content = content.replace(
+  "setError('Google Sign-In popup was blocked by your browser. Please click the ↗️ \"Open in new tab\" button at the top right of the preview to sign in.');",
+  "setError('Apple Sign-In popup was blocked by your browser. Please click the ↗️ \"Open in new tab\" button at the top right of the preview to sign in.');"
+);
 
-if (content.includes(targetGoogleCatch)) {
-    content = content.replace(targetGoogleCatch, newGoogleCatch);
-    fs.writeFileSync(file, content, 'utf8');
-    console.log("Updated Google Auth error handling.");
-} else {
-    console.log("Could not find Google Catch block.");
-}
+content = content.replace(
+  "setError('Apple Sign-In popup was blocked by your browser. Please click the ↗️ \"Open in new tab\" button at the top right of the preview to sign in.');",
+  "setError('Google Sign-In popup was blocked by your browser. Please click the ↗️ \"Open in new tab\" button at the top right of the preview to sign in.');"
+);
+
+fs.writeFileSync('src/components/Auth.tsx', content);
+console.log('Fixed auth errors');

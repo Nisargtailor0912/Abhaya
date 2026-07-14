@@ -1,7 +1,8 @@
+import TiltWrapper from './TiltWrapper';
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ShieldAlert, Sun, Moon, Settings } from 'lucide-react';
-import { auth, googleProvider, appleProvider } from '../firebase';
+import { auth, googleProvider } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, signInAnonymously } from 'firebase/auth';
 
 export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => void, theme?: 'light' | 'dark' | 'system', onThemeChange?: (theme: 'light' | 'dark' | 'system') => void }) {
@@ -73,28 +74,19 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
     }
   };
 
-  const handleAppleSignIn = async () => {
+  
+  
+  const handleGuestSignIn = async () => {
     setLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, appleProvider);
+      await signInAnonymously(auth);
       onAuth();
     } catch (err: any) {
-      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        console.error(err);
-      }
-      if (err.code === 'auth/unauthorized-domain') {
-        setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        if (window.self !== window.top) {
-          setError('Google Sign-In popup was blocked by your browser. Please click the ↗️ "Open in new tab" button at the top right of the preview to sign in.');
-        } else {
-          setError('Sign-in popup was closed before completion. Please try again.');
-        }
-      } else if (err.code === 'auth/operation-not-allowed') {
-        setError('Apple Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
+      if (err.code === 'auth/operation-not-allowed') {
+        onAuth(); // Trigger local mock fallback
       } else {
-        setError(err.message || 'An error occurred during Apple authentication.');
+        setError(err.message || 'An error occurred during Guest authentication.');
       }
     } finally {
       setLoading(false);
@@ -113,9 +105,9 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       }
       if (err.code === 'auth/unauthorized-domain') {
         setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
-      } else if (err.code === 'auth/popup-closed-by-user') {
+      } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/popup-blocked') {
         if (window.self !== window.top) {
-          setError('Apple Sign-In popup was blocked by your browser. Please click the ↗️ "Open in new tab" button at the top right of the preview to sign in.');
+          setError('Google Sign-In popup was blocked by your browser. Please click the ↗️ "Open in new tab" button at the top right of the preview to sign in.');
         } else {
           setError('Sign-in popup was closed before completion. Please try again.');
         }
@@ -281,18 +273,16 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
           </svg>
           Google
         </button>
+        
+        
         <button 
-          onClick={handleAppleSignIn}
+          onClick={handleGuestSignIn}
           disabled={loading}
           type="button"
-          className="w-full bg-white/40 dark:bg-slate-800/30 backdrop-blur-sm border border-white/50 text-slate-700 dark:text-slate-200 font-semibold rounded-xl py-3 mt-3 hover:bg-white dark:bg-slate-800/70 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-slate-800/80 dark:bg-slate-700/80 backdrop-blur-sm border border-slate-700 text-white font-semibold rounded-xl py-3 mt-3 hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" fill="black"/>
-            <path d="M13.7915 9.07185C14.2863 8.46824 14.6152 7.62002 14.5209 6.78918C13.8055 6.81831 12.9231 7.27218 12.4173 7.86971C11.9619 8.39702 11.564 9.25547 11.6702 10.076C12.4691 10.1388 13.2965 9.67576 13.7915 9.07185Z" fill="white"/>
-            <path d="M14.6146 10.366C13.5684 10.366 12.5694 11.0558 11.9644 11.0558C11.3592 11.0558 10.4908 10.4079 9.6204 10.4394C8.51341 10.4601 7.48168 11.0874 6.91428 12.0792C5.74836 14.103 6.61719 17.0984 7.74719 18.7364C8.29809 19.5358 8.94828 20.4418 9.80789 20.4093C10.6358 20.3776 10.9575 19.8665 11.9483 19.8665C12.9392 19.8665 13.2384 20.4093 14.0986 20.3776C14.9897 20.3456 15.5687 19.5467 16.0984 18.7571C16.708 17.8643 16.9579 16.9934 16.9898 16.9515C16.9579 16.9304 15.2217 16.2736 15.2217 14.3491C15.2217 12.7538 16.512 11.9701 16.574 11.9282C15.8291 10.8413 14.6766 10.366 14.6146 10.366Z" fill="white"/>
-          </svg>
-          Apple
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Continue as Guest
         </button>
 
         <div className="mt-6 text-center">

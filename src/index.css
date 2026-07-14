@@ -42,3 +42,7 @@
     transform: scale(1.05);
   }
 }
+body {
+  overflow-x: hidden;
+  perspective: 1000px;
+}
