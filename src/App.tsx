@@ -8,6 +8,7 @@ import Auth from './components/Auth';
 import SlideToAnswer from './components/SlideToAnswer';
 import SlideToSOS from './components/SlideToSOS';
 import {
+  Download,
   ShieldAlert,
   PhoneCall,
   Volume2,
@@ -52,6 +53,8 @@ export default function App() {
   const sosActiveRef = useRef(sosActive);
   useEffect(() => { sosActiveRef.current = sosActive; }, [sosActive]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [lastSyncedLocation, setLastSyncedLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [lastSyncedTime, setLastSyncedTime] = useState<Date | null>(null);
   
   // Fake Call States
   const [fakeCallActive, setFakeCallActive] = useState(false);
@@ -229,11 +232,15 @@ export default function App() {
   // Sync location to emergency doc
   useEffect(() => {
     if (sosActive && currentEmergencyId && location.latitude && location.longitude) {
-      if (localMock) return;
       updateDoc(doc(db, 'emergencies', currentEmergencyId), {
         'location.latitude': location.latitude,
         'location.longitude': location.longitude
-      }).catch(err => console.error("Error updating emergency location:", err));
+      })
+      .then(() => {
+        setLastSyncedLocation({ lat: location.latitude!, lng: location.longitude! });
+        setLastSyncedTime(new Date());
+      })
+      .catch(err => console.error("Error updating emergency location:", err));
     }
   }, [location.latitude, location.longitude, sosActive, currentEmergencyId]);
 
@@ -335,7 +342,6 @@ export default function App() {
       setCountdown(null);
       if (currentEmergencyId) {
         try {
-          if (localMock) return;
           await updateDoc(doc(db, 'emergencies', currentEmergencyId), {
             status: 'resolved'
           });
@@ -353,13 +359,12 @@ export default function App() {
     setSosActive(true);
     addHistoryEvent('SOS');
     
-    if (user) {
+    if (user || localMock) {
       try {
-        if (localMock) return;
         const emgRef = await addDoc(collection(db, 'emergencies'), {
-          userId: user.uid,
-          userName: personalInfo.fullName || user.displayName || 'Unknown User',
-          userEmail: user.email,
+          userId: user?.uid || 'guest-user',
+          userName: personalInfo.fullName || user?.displayName || 'Guest User',
+          userEmail: user?.email || 'guest@local',
           userPhone: personalInfo.phone || '',
           type: 'SOS',
           location: {
@@ -370,6 +375,10 @@ export default function App() {
           timestamp: serverTimestamp()
         });
         setCurrentEmergencyId(emgRef.id);
+        if (location.latitude && location.longitude) {
+          setLastSyncedLocation({ lat: location.latitude, lng: location.longitude });
+          setLastSyncedTime(new Date());
+        }
       } catch (err) {
         console.error("Error creating emergency record:", err);
       }
@@ -597,6 +606,7 @@ const handleLogout = async () => {
                 {isCharging && <span className="text-[10px] ml-0.5">⚡</span>}
               </div>
             )}
+            
             <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:bg-slate-700 transition-colors">
               <Settings size={20} />
             </button>
@@ -609,9 +619,17 @@ const handleLogout = async () => {
 
       
       {!isOnline && (
-        <div className="bg-rose-500 text-white text-xs font-medium px-4 py-2 text-center flex items-center justify-center gap-2 z-30 relative">
-          <WifiOff size={14} />
-          You are currently offline. Some features may be unavailable.
+        <div className="bg-rose-500 text-white text-xs font-medium px-4 py-3 text-center flex flex-col items-center justify-center gap-1 z-30 relative shadow-md">
+          <div className="flex items-center gap-2">
+            <WifiOff size={14} />
+            <span className="font-bold">You are currently offline.</span> Some features may be unavailable.
+          </div>
+          {lastSyncedLocation && lastSyncedTime && (
+            <div className="text-[10px] bg-rose-600/50 px-3 py-1 rounded-full mt-1 flex items-center gap-1.5 border border-rose-400/30">
+              <MapPin size={10} />
+              Last Synced: {lastSyncedLocation.lat.toFixed(4)}, {lastSyncedLocation.lng.toFixed(4)} • {lastSyncedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+            </div>
+          )}
         </div>
       )}
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
@@ -893,6 +911,53 @@ const handleLogout = async () => {
           </div>
         </section>
 
+
+        {/* App Downloads Section */}
+        <section className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-slate-800/80 p-6 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
+              <Download size={24} className="text-indigo-600 dark:text-indigo-400" />
+              Download Abhaya App
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Get the secure Abhaya application for your Android or Windows device. Version 1.0.3 includes enhanced Stealth Mode, safe routing, and better battery tracking.
+            </p>
+            
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-slate-700 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
+                    📱 Android APK (Secure)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Direct download for Android devices.</p>
+                </div>
+                <a 
+                  href="/Abhaya-Secure-App.apk" 
+                  download="Abhaya-Secure-App.apk"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full"
+                >
+                  <Download size={18} /> Download APK
+                </a>
+              </div>
+
+              <div className="bg-white dark:bg-slate-700 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
+                    💻 Windows Desktop
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Install as a PWA on your Windows PC.</p>
+                </div>
+                <button 
+                  onClick={() => alert("To install on Windows, click the install icon in your browser's address bar.")}
+                  className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full"
+                >
+                  <Download size={18} /> Install App
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
       <footer className="text-center py-6 text-slate-400 text-xs">
@@ -903,6 +968,8 @@ const handleLogout = async () => {
     </div>
 
       <AnimatePresence>
+        
+        
         {showSettings && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -1169,6 +1236,9 @@ const handleLogout = async () => {
                 </button>
               </div>
               <div className="p-5 overflow-y-auto space-y-6">
+                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl">
+                  Adding the app to your home screen allows you to bypass the browser and trigger SOS faster during emergencies.
+                </p>
                 <div>
                   <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
                     <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-1.5 rounded-lg">🍎</span>

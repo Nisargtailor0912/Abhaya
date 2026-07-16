@@ -367,7 +367,7 @@ export default function AdminPortal() {
               </button>
             </div>
           )}
-          <APIProvider apiKey={API_KEY} version="weekly">
+          <APIProvider apiKey={API_KEY} version="3.57">
               <Map
                 defaultCenter={selectedEmergency && selectedEmergency.location.latitude && selectedEmergency.location.longitude ? {lat: selectedEmergency.location.latitude, lng: selectedEmergency.location.longitude} : {lat: defaultPosition[0], lng: defaultPosition[1]}}
                 defaultZoom={selectedEmergency ? 14 : 4}

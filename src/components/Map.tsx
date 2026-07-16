@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { APIProvider, Map, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
-import { LocationData } from '../types';
 import { Navigation } from 'lucide-react';
 
 const API_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY || '';
+
 const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
+
+interface LocationData {
+  latitude: number | null;
+  longitude: number | null;
+  error: string | null;
+}
 
 interface LocationMapProps {
   sosActive?: boolean;
@@ -13,14 +19,25 @@ interface LocationMapProps {
 
 function MapUpdater({ center, trigger }: { center: { lat: number; lng: number }, trigger?: number }) {
   const map = useMap();
+  const [initialCentered, setInitialCentered] = useState(false);
   
+  // Handle manual recenter trigger
   useEffect(() => {
-    if (map && center.lat && center.lng) {
+    if (map && center.lat && center.lng && trigger && trigger > 0) {
       map.panTo(center);
       map.setZoom(15);
     }
-  }, [map, center, trigger]);
+  }, [map, trigger]);
   
+  // Handle initial center on load
+  useEffect(() => {
+    if (map && center.lat && center.lng && !initialCentered) {
+      map.panTo(center);
+      map.setZoom(15);
+      setInitialCentered(true);
+    }
+  }, [map, center.lat, center.lng, initialCentered]);
+
   return null;
 }
 
@@ -52,16 +69,14 @@ function SafeRouteDirections({
 
   useEffect(() => {
     if (!directionsService || !directionsRenderer) return;
-
     if (!origin || !destination) {
       directionsRenderer.setDirections({ routes: [] } as any);
       return;
     }
-
     directionsService
       .route({
-        origin,
-        destination,
+        origin: { lat: origin.lat, lng: origin.lng },
+        destination: { lat: destination.lat, lng: destination.lng },
         travelMode: google.maps.TravelMode.DRIVING,
       })
       .then(response => {
@@ -71,10 +86,8 @@ function SafeRouteDirections({
         console.error("Directions request failed", e);
       });
       
-    return () => {
-      directionsRenderer.setDirections({ routes: [] } as any);
-    };
-  }, [directionsService, directionsRenderer, origin, destination]);
+    // Cleanup is handled by setting routes to empty when origin/dest is null
+  }, [directionsService, directionsRenderer, origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
 
   return null;
 }
@@ -102,8 +115,7 @@ export default function LocationMap({ location, sosActive }: LocationMapProps) {
         lng: location.longitude
       });
     }
-  }, [location]);
-
+  }, [location.latitude, location.longitude]); // Depend on individual values to avoid ref changes
 
   useEffect(() => {
     if (sosActive && location.latitude && location.longitude && !showSafeRoute) {
@@ -189,7 +201,7 @@ export default function LocationMap({ location, sosActive }: LocationMapProps) {
         </div>
       )}
       
-      <APIProvider apiKey={API_KEY} version="weekly">
+      <APIProvider apiKey={API_KEY} version="3.57">
         <Map
           defaultCenter={mapCenter}
           defaultZoom={15}
@@ -202,7 +214,7 @@ export default function LocationMap({ location, sosActive }: LocationMapProps) {
           <MapUpdater center={mapCenter} trigger={recenterTrigger} />
           
           <SafeRouteDirections 
-            origin={showSafeRoute && location.latitude ? { lat: location.latitude, lng: location.longitude! } : null}
+            origin={showSafeRoute && location.latitude && location.longitude ? { lat: location.latitude, lng: location.longitude } : null}
             destination={safeLocation}
           />
           

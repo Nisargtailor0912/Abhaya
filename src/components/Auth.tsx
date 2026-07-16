@@ -82,7 +82,7 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
       await signInAnonymously(auth);
       onAuth();
     } catch (err: any) {
-      if (err.code === 'auth/operation-not-allowed') {
+      if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/admin-restricted-operation') {
         onAuth(); // Trigger local mock fallback
       } else {
         setError(err.message || 'An error occurred during Guest authentication.');

@@ -1,7 +1,7 @@
 const fs = require('fs');
-let content = fs.readFileSync('src/App.tsx', 'utf8');
-content = content.replace(
-  "import SlideToSOS from './components/SlideToSOS';",
-  "import SlideToSOS from './components/SlideToSOS';\nimport TiltWrapper from './components/TiltWrapper';"
-);
-fs.writeFileSync('src/App.tsx', content);
+let app = fs.readFileSync('src/App.tsx', 'utf8');
+
+if (!app.includes('Download,')) {
+  app = app.replace('import { Shield, Phone, MessageSquare', 'import { Shield, Phone, MessageSquare, Download');
+  fs.writeFileSync('src/App.tsx', app);
+}
