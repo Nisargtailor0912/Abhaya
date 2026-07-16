@@ -929,7 +929,7 @@ const handleLogout = async () => {
                   <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
                     📱 Android APK (Secure)
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Direct download for Android devices.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Direct download for Android devices. <br/><span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Verified Secure Build</span><br/><span className="text-[10px] text-slate-400">(Note: Your browser may ask to confirm downloading an APK. Choose "Keep" to download.)</span></p>
                 </div>
                 <a 
                   href="/Abhaya-Secure-App.apk" 

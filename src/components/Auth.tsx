@@ -97,7 +97,6 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
-      onAuth();
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
         console.error(err);
@@ -106,9 +105,14 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
         setError(`Domain not authorized. Add ${window.location.hostname} to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
       } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/popup-blocked') {
         if (window.self !== window.top) {
-          setError('Google Sign-In popup was blocked by your browser. Please click the ↗️ "Open in new tab" button at the top right of the preview to sign in.');
+          setError('Google Sign-In popup was blocked. Try opening in a new tab, or use guest mode.');
         } else {
-          setError('Sign-in popup was closed before completion. Please try again.');
+          try {
+             // Fallback to redirect if popup fails
+             await signInWithRedirect(auth, googleProvider);
+          } catch(redirectErr) {
+             setError('Sign-in popup was closed or blocked. Please try again or use guest mode.');
+          }
         }
       } else if (err.code === 'auth/operation-not-allowed') {
         setError('Google Sign-In is not enabled. Please enable it in the Firebase Console -> Authentication -> Sign-in method.');
