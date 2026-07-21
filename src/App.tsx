@@ -8,7 +8,6 @@ import Auth from './components/Auth';
 import SlideToAnswer from './components/SlideToAnswer';
 import SlideToSOS from './components/SlideToSOS';
 import {
-  Download,
   ShieldAlert,
   PhoneCall,
   Volume2,
@@ -32,26 +31,21 @@ import {
   ChevronDown,
   LocateFixed,
   Moon,
-  Sun,
-  EyeOff
+  Sun
 } from 'lucide-react';
 import { quickActions, safetyTips, defaultSettings, defaultPersonalInfo, emergencyNumbersIndia } from './data';
 import { LocationData, UserSettings, Contact, HistoryEvent, PersonalInfo } from './types';
 import LocationMap from './components/Map';
 import AdminPortal from './components/AdminPortal';
 import SafetyBot from './components/SafetyBot';
-import StealthMode from './components/StealthMode';
 import { Bot } from 'lucide-react';
 import { useTheme } from './useTheme';
 
 export default function App() {
-  const [user, setUser] = useState<FirebaseUser | any | null>(null);
-  const [localMock, setLocalMock] = useState(localStorage.getItem("localMockAuth") === "true");
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   const [sosActive, setSosActive] = useState(false);
-  const sosActiveRef = useRef(sosActive);
-  useEffect(() => { sosActiveRef.current = sosActive; }, [sosActive]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSyncedLocation, setLastSyncedLocation] = useState<{lat: number, lng: number} | null>(null);
   const [lastSyncedTime, setLastSyncedTime] = useState<Date | null>(null);
@@ -64,13 +58,10 @@ export default function App() {
   const [alarmActive, setAlarmActive] = useState(false);
   const [location, setLocation] = useState<LocationData>({ latitude: null, longitude: null, error: null });
   const [countdown, setCountdown] = useState<number | null>(null);
-  const countdownRef = useRef(countdown);
-  useEffect(() => { countdownRef.current = countdown; }, [countdown]);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isCharging, setIsCharging] = useState<boolean | null>(null);
   
   const [showSettings, setShowSettings] = useState(false);
-  const [stealthActive, setStealthActive] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showPersonalInfo, setShowPersonalInfo] = useState(false);
   const [showEmergencyNumbers, setShowEmergencyNumbers] = useState(false);
@@ -124,10 +115,7 @@ export default function App() {
       }).catch((e: any) => console.log('Battery API not supported/allowed', e));
     }
 
-    
-
-
-  return () => {
+    return () => {
        if (batteryManager && updateBatteryStatus) {
           batteryManager.removeEventListener('levelchange', updateBatteryStatus);
           batteryManager.removeEventListener('chargingchange', updateBatteryStatus);
@@ -151,28 +139,31 @@ export default function App() {
       setUser(currentUser);
       if (currentUser) {
         // Fetch user data from Firestore
-
-        if (currentUser.uid === 'local-mock') {
-          const localData = JSON.parse(localStorage.getItem("mockUserData") || "{}");
-          if (localData.personalInfo) setPersonalInfo({ ...defaultPersonalInfo, ...localData.personalInfo });
-          if (localData.settings) setSettings({ ...defaultSettings, ...localData.settings });
-          if (localData.contacts) setContacts(localData.contacts);
-        } else {
-          try {
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-              const data = userDoc.data();
-              if (data.personalInfo) setPersonalInfo({ ...defaultPersonalInfo, ...data.personalInfo });
-              if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
-              if (data.contacts) setContacts(data.contacts);
-            } else {
-              const initialPersonalInfo = { ...defaultPersonalInfo, fullName: currentUser.displayName || defaultPersonalInfo.fullName };
-              await setDoc(userDocRef, { personalInfo: initialPersonalInfo, settings: defaultSettings, contacts: [] });
-              setPersonalInfo(initialPersonalInfo);
-            }
-          } catch (err: any) {
-            console.error("Failed to fetch user data:", err);
+        try {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.personalInfo) setPersonalInfo({ ...defaultPersonalInfo, ...data.personalInfo });
+            if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
+            if (data.contacts) setContacts(data.contacts);
+          } else {
+            // Initialize user doc
+            const initialPersonalInfo = {
+              ...defaultPersonalInfo,
+              fullName: currentUser.displayName || defaultPersonalInfo.fullName
+            };
+            await setDoc(userDocRef, {
+              personalInfo: initialPersonalInfo,
+              settings: defaultSettings,
+              contacts: []
+            });
+            setPersonalInfo(initialPersonalInfo);
+          }
+        } catch (err: any) {
+          console.error("Failed to fetch user data:", err);
+          if (err.code === 'permission-denied') {
+            console.warn("Firestore permissions denied. Make sure your Firebase Firestore security rules allow read/write for authenticated users.");
           }
         }
       }
@@ -183,12 +174,9 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => { if (localMock && !user) { setUser({uid: "local-mock", email: "guest@local"}); } }, [localMock, user]);
-
   // Save changes to Firestore
   const saveUserData = async (updates: any) => {
-    if (!user && !localMock) return;
-    if (localMock) { localStorage.setItem("mockUserData", JSON.stringify({...JSON.parse(localStorage.getItem("mockUserData") || "{}"), ...updates})); return; }
+    if (!user) return;
     const userDocRef = doc(db, 'users', user.uid);
     try {
       await setDoc(userDocRef, updates, { merge: true });
@@ -247,7 +235,7 @@ export default function App() {
   // Shake detection
   useEffect(() => {
     if (!settings.shakeToTriggerSOS) return;
-    if (sosActiveRef.current && settings.lowPowerMode) return; // Disable background process to save battery
+    if (sosActive && settings.lowPowerMode) return; // Disable background process to save battery
 
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastTime = new Date().getTime();
@@ -269,7 +257,7 @@ export default function App() {
             (deltaX > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD) || 
             (deltaY > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD)) {
           
-          if (!sosActiveRef.current && countdownRef.current === null) {
+          if (!sosActive && countdown === null) {
             handleSOSClick(); // Trigger SOS
           }
         }
@@ -283,7 +271,7 @@ export default function App() {
 
     window.addEventListener('devicemotion', handleMotion);
     return () => window.removeEventListener('devicemotion', handleMotion);
-  }, [settings.shakeToTriggerSOS, settings.lowPowerMode]); // Use refs to avoid rebinding 60 times a second
+  }, [settings.shakeToTriggerSOS, sosActive, countdown, settings.lowPowerMode]);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -296,27 +284,6 @@ export default function App() {
       setCountdown(null);
     }
   }, [countdown]);
-
-
-  const moveContact = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index > 0) {
-      const newContacts = [...contacts];
-      [newContacts[index - 1], newContacts[index]] = [newContacts[index], newContacts[index - 1]];
-      setContacts(newContacts);
-      saveUserData({ contacts: newContacts });
-    } else if (direction === 'down' && index < contacts.length - 1) {
-      const newContacts = [...contacts];
-      [newContacts[index + 1], newContacts[index]] = [newContacts[index], newContacts[index + 1]];
-      setContacts(newContacts);
-      saveUserData({ contacts: newContacts });
-    }
-  };
-
-  const deleteContact = (id: string) => {
-    const newContacts = contacts.filter(c => c.id !== id);
-    setContacts(newContacts);
-    saveUserData({ contacts: newContacts });
-  };
 
   const addHistoryEvent = (type: 'SOS' | 'Alarm' | 'Location Shared' | 'Fake Call') => {
     const newEvent: HistoryEvent = {
@@ -351,7 +318,7 @@ export default function App() {
         }
       }
     } else {
-      setCountdown(3);
+      activateSOS();
     }
   };
 
@@ -359,7 +326,26 @@ export default function App() {
     setSosActive(true);
     addHistoryEvent('SOS');
     
-    if (user || localMock) {
+    // Play alert ringtone automatically, synchronously before any await
+    if (!alarmActive) {
+      toggleAlarm();
+    }
+    
+    const emergencyNumber = contacts.length > 0 ? contacts[0].phone : '100';
+    const smsPhones = contacts.map(c => c.phone).join(',');
+    const locationLink = location.latitude ? `https://maps.google.com/?q=${location.latitude},${location.longitude}` : 'Unknown location';
+    const message = encodeURIComponent(`EMERGENCY SOS! I need help immediately. Location: ${locationLink}`);
+    
+    // Trigger SMS via iframe to avoid consuming the top-level navigation intent
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `sms:${smsPhones}?body=${message}`;
+    document.body.appendChild(iframe);
+    
+    // Trigger Phone Call via direct navigation synchronously
+    window.location.href = `tel:${emergencyNumber}`;
+    
+    if (user || (typeof localMock !== 'undefined' ? localMock : false)) {
       try {
         const emgRef = await addDoc(collection(db, 'emergencies'), {
           userId: user?.uid || 'guest-user',
@@ -384,36 +370,12 @@ export default function App() {
       }
     }
 
-    const emergencyNumber = contacts.length > 0 ? contacts[0].phone : '100';
-    
-    // Play alert ringtone automatically
-    if (!alarmActive) {
-      toggleAlarm();
-    }
-
-    const smsPhones = contacts.map(c => c.phone).join(',');
-    const locationLink = location.latitude ? `https://maps.google.com/?q=${location.latitude},${location.longitude}` : 'Unknown location';
-    const message = encodeURIComponent(`EMERGENCY SOS! I need help immediately. Location: ${locationLink}`);
-    
-    const smsLink = document.createElement('a');
-    smsLink.href = `sms:${smsPhones}?body=${message}`;
-    smsLink.target = '_top';
-    document.body.appendChild(smsLink);
-    smsLink.click();
-    document.body.removeChild(smsLink);
-    
-    setTimeout(() => {
-        const telLink = document.createElement('a');
-        telLink.href = `tel:${emergencyNumber}`;
-        telLink.target = '_top';
-        document.body.appendChild(telLink);
-        telLink.click();
-        document.body.removeChild(telLink);
-    }, 500);
-
     const contactNames = contacts.length > 0 ? contacts.map(c => c.name).join(', ') : 'No trusted contacts saved';
-    alert(`EMERGENCY SOS ACTIVATED!\n\n1. Request sent to Admin Portal.\n2. Notifying Trusted Contacts (${contactNames}) with a high-priority alert ringtone call.\n3. SMS messages dispatched with your live location link.\n\nStay calm. Help is on the way.`);
-
+    // Use setTimeout so the alert doesn't block the intents from opening on mobile
+    setTimeout(() => {
+      alert(`EMERGENCY SOS ACTIVATED!\n\n1. Request sent to Admin Portal.\n2. Notifying Trusted Contacts (${contactNames}) with a high-priority alert ringtone call.\n3. SMS messages dispatched with your live location link.\n\nStay calm. Help is on the way.`);
+    }, 1500);
+    
     // Simulate Offline SMS notification if enabled and network is down
     if (settings.offlineSMS && !navigator.onLine) {
       alert("Network unavailable. Attempting Offline Emergency SMS...");
@@ -549,21 +511,6 @@ const toggleAlarm = () => {
     setFakeCallActive(false);
   };
 
-const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch(err) {}
-    localStorage.removeItem("localMockAuth");
-    setLocalMock(false);
-    setUser(null);
-    setShowSettings(false);
-    setShowProfile(false);
-  };
-
-  const [botMessages, setBotMessages] = useState<any[]>([
-    { id: '1', role: 'assistant', content: "Hello, I'm the Abhaya Bot. I'm here to offer advice, safety tips, or just listen if you need someone to talk to. How can I support you today?" }
-  ]);
-
   const toggleSetting = (key: keyof UserSettings) => {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
@@ -574,25 +521,24 @@ const handleLogout = async () => {
     return <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400">Loading...</div>;
   }
 
-  if (!user && !localMock) {
-    return <Auth onAuth={() => { setLocalMock(true); localStorage.setItem("localMockAuth", "true"); }} theme={settings.theme} onThemeChange={(t: any) => setSettings(prev => ({...prev, theme: t}))} />;
+  if (!user) {
+    return <Auth onAuth={() => {}} theme={settings.theme} onThemeChange={(t: any) => setSettings(prev => ({...prev, theme: t}))} />;
   }
 
   if (user?.email?.toLowerCase() === 'abhaya@abhaya.com') {
     return <AdminPortal />;
   }
 
-  if (stealthActive) {
-    return <StealthMode onExit={() => setStealthActive(false)} />;
-  }
-
   return (
-    <>
-    
-<div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white pb-20 md:pb-0 relative z-0">
-
+    <div className="min-h-screen bg-gradient-to-br from-rose-100 via-slate-50 to-emerald-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 font-sans text-slate-900 dark:text-white pb-20 md:pb-0 relative overflow-hidden z-0">
+      {/* Glassmorphism background blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-rose-400/20 dark:bg-rose-500/10 blur-[100px] animate-pulse-slow"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-emerald-400/20 dark:bg-emerald-500/10 blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute -bottom-[10%] left-[20%] w-[60%] h-[60%] rounded-full bg-indigo-400/20 dark:bg-indigo-500/10 blur-[120px] animate-pulse-slow"></div>
+      </div>
       {/* Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm">
+      <header className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/20 dark:border-white/10 sticky top-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-rose-600">
             <ShieldAlert size={28} strokeWidth={2.5} />
@@ -606,7 +552,6 @@ const handleLogout = async () => {
                 {isCharging && <span className="text-[10px] ml-0.5">⚡</span>}
               </div>
             )}
-            
             <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:bg-slate-700 transition-colors">
               <Settings size={20} />
             </button>
@@ -635,8 +580,7 @@ const handleLogout = async () => {
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         
         {/* SOS Section */}
-        
-<section className="flex flex-col items-center justify-center py-8">
+        <section className="flex flex-col items-center justify-center py-8">
           <div className="relative w-full flex justify-center">
             {/* Ripple effect when active */}
             {sosActive && !settings.lowPowerMode && (
@@ -663,8 +607,7 @@ const handleLogout = async () => {
 
         {/* Status Bar */}
         {(sosActive || alarmActive || location.latitude || location.error) && (
-
-           <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col gap-3">
+           <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/40 dark:border-white/10 transition-all duration-300 flex flex-col gap-3">
              {location.error && (
                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                  <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
@@ -754,27 +697,24 @@ const handleLogout = async () => {
             {quickActions.map((action) => {
               const isActive = action.id === 'alarm' && alarmActive;
               return (
-                
-                  <button
-                    key={action.id}
-                    onClick={() => {
-                      if (action.id === 'alarm') toggleAlarm();
-                      if (action.id === 'fake-call') triggerFakeCall();
-                      if (action.id === 'medical-qr') setShowMedicalQR(true);
-                    }}
-                   
-                    className={`w-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
-                      isActive 
-                        ? 'border-orange-500 bg-orange-50' 
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${action.color}`}>
-                      <action.icon size={24} />
-                    </div>
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200 text-center">{action.title}</span>
-                  </button>
-                
+                <button
+                  key={action.id}
+                  onClick={() => {
+                    if (action.id === 'alarm') toggleAlarm();
+                    if (action.id === 'fake-call') triggerFakeCall();
+                    if (action.id === 'medical-qr') setShowMedicalQR(true);
+                  }}
+                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
+                    isActive 
+                      ? 'border-orange-500 bg-orange-50 shadow-sm' 
+                      : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${action.color}`}>
+                    <action.icon size={24} />
+                  </div>
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-200 text-center">{action.title}</span>
+                </button>
               )
             })}
           </div>
@@ -829,22 +769,12 @@ const handleLogout = async () => {
                           <span className="text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full uppercase tracking-wide">Primary</span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {contact.relation} • 
-                        <span className={settings.blurSensitiveInfo ? "blur-sm hover:blur-none transition-all duration-300" : ""}>
-                          {contact.phone}
-                        </span>
-                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{contact.relation} • {contact.phone}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <a href={`tel:${contact.phone}`} target="_top" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
-                      <Phone size={18} />
-                    </a>
-                    <button onClick={() => deleteContact(contact.id)} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors shrink-0">
-                      <X size={18} />
-                    </button>
-                  </div>
+                  <a href={`tel:${contact.phone}`} target="_top" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
+                    <Phone size={18} />
+                  </a>
                 </div>
               ))
             )}
@@ -871,7 +801,7 @@ const handleLogout = async () => {
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Emergency History</h2>
-             <button onClick={() => { setHistory([]); saveUserData({ history: [] }); }} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200">Clear All</button>
+             <button onClick={() => setHistory([])} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200">Clear</button>
           </div>
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
             {history.length === 0 ? (
@@ -911,53 +841,6 @@ const handleLogout = async () => {
           </div>
         </section>
 
-
-        {/* App Downloads Section */}
-        <section className="max-w-3xl mx-auto px-4 py-8">
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-slate-800/80 p-6 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
-              <Download size={24} className="text-indigo-600 dark:text-indigo-400" />
-              Download Abhaya App
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-              Get the secure Abhaya application for your Android or Windows device. Version 1.0.3 includes enhanced Stealth Mode, safe routing, and better battery tracking.
-            </p>
-            
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-slate-700 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex flex-col justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
-                    📱 Android APK (Secure)
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Direct download for Android devices. <br/><span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Verified Secure Build</span><br/><span className="text-[10px] text-slate-400">(Note: Your browser may ask to confirm downloading an APK. Choose "Keep" to download.)</span></p>
-                </div>
-                <a 
-                  href="/Abhaya-Secure-App.apk" 
-                  download="Abhaya-Secure-App.apk"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full"
-                >
-                  <Download size={18} /> Download APK
-                </a>
-              </div>
-
-              <div className="bg-white dark:bg-slate-700 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex flex-col justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
-                    💻 Windows Desktop
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Install as a PWA on your Windows PC.</p>
-                </div>
-                <button 
-                  onClick={() => alert("To install on Windows, click the install icon in your browser's address bar.")}
-                  className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full"
-                >
-                  <Download size={18} /> Install App
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
       </main>
 
       <footer className="text-center py-6 text-slate-400 text-xs">
@@ -965,17 +848,13 @@ const handleLogout = async () => {
       </footer>
 
       {/* Settings Modal */}
-    </div>
-
       <AnimatePresence>
-        
-        
         {showSettings && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -995,21 +874,21 @@ const handleLogout = async () => {
                   <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Appearance</p>
                   <div className="grid grid-cols-3 gap-2">
                     <button 
-                      onClick={() => { const s: UserSettings = {...settings, theme: 'light'}; setSettings(s); saveUserData({ settings: s }); }}
+                      onClick={() => { const s = {...settings, theme: 'light'}; setSettings(s); saveUserData({ settings: s }); }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'light' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                     >
                       <Sun size={20} className="text-slate-600 dark:text-slate-300" />
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Light</span>
                     </button>
                     <button 
-                      onClick={() => { const s: UserSettings = {...settings, theme: 'dark'}; setSettings(s); saveUserData({ settings: s }); }}
+                      onClick={() => { const s = {...settings, theme: 'dark'}; setSettings(s); saveUserData({ settings: s }); }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'dark' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                     >
                       <Moon size={20} className="text-slate-600 dark:text-slate-300" />
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Dark</span>
                     </button>
                     <button 
-                      onClick={() => { const s: UserSettings = {...settings, theme: 'system'}; setSettings(s); saveUserData({ settings: s }); }}
+                      onClick={() => { const s = {...settings, theme: 'system'}; setSettings(s); saveUserData({ settings: s }); }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'system' || !settings.theme ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                     >
                       <Settings size={20} className="text-slate-600 dark:text-slate-300" />
@@ -1103,41 +982,9 @@ const handleLogout = async () => {
                   </div>
                 </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
-                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4 uppercase tracking-wider">Privacy & Security</h4>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center"><EyeOff size={20} /></div>
-                          <div>
-                            <p className="font-semibold text-slate-900 dark:text-white">Blur Sensitive Info</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Hide contacts & emails</p>
-                          </div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" checked={settings.blurSensitiveInfo || false} onChange={() => toggleSetting('blurSensitiveInfo')} />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center"><User size={20} /></div>
-                          <div>
-                            <p className="font-semibold text-slate-900 dark:text-white">Stealth Mode</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Double-click logo to show clock</p>
-                          </div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" checked={settings.stealthMode || false} onChange={() => toggleSetting('stealthMode')} />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-
-                    </div>
-                  </div>
                 <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
                   <button 
-                    onClick={handleLogout} 
+                    onClick={() => { setShowSettings(false); signOut(auth); }} 
                     className="w-full flex items-center justify-center gap-2 p-3 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors font-medium"
                   >
                     <LogOut size={20} />
@@ -1158,7 +1005,7 @@ const handleLogout = async () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1202,7 +1049,7 @@ const handleLogout = async () => {
                   <Smartphone size={20} className="text-slate-400" />
                   Add Panic Widget
                 </button>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium mt-4">
+                <button onClick={() => { setShowProfile(false); signOut(auth); }} className="w-full flex items-center gap-3 p-4 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left font-medium mt-4">
                   <LogOut size={20} className="text-rose-400" />
                   Sign Out
                 </button>
@@ -1220,7 +1067,7 @@ const handleLogout = async () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1236,9 +1083,6 @@ const handleLogout = async () => {
                 </button>
               </div>
               <div className="p-5 overflow-y-auto space-y-6">
-                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl">
-                  Adding the app to your home screen allows you to bypass the browser and trigger SOS faster during emergencies.
-                </p>
                 <div>
                   <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
                     <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 p-1.5 rounded-lg">🍎</span>
@@ -1294,7 +1138,7 @@ const handleLogout = async () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1334,7 +1178,7 @@ const handleLogout = async () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1357,11 +1201,11 @@ const handleLogout = async () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Email</label>
-                  <input type="email" className={`w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500 ${settings.blurSensitiveInfo ? "blur-sm focus:blur-none" : ""}`} value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} />
+                  <input type="email" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Phone Number</label>
-                  <input type="tel" className={`w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500 ${settings.blurSensitiveInfo ? "blur-sm focus:blur-none" : ""}`} value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: e.target.value})} />
+                  <input type="tel" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500" value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Blood Group</label>
@@ -1406,7 +1250,7 @@ const handleLogout = async () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1466,7 +1310,7 @@ const handleLogout = async () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/40  flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -1513,7 +1357,7 @@ const handleLogout = async () => {
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{personalInfo.fullName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">Show this QR code to first responders</p><p className="text-[10px] text-amber-600 dark:text-amber-400 max-w-[200px] mx-auto leading-tight">Note: Anyone who scans this code can view your medical data.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Show this QR code to first responders</p>
                 </div>
               </div>
             </motion.div>
@@ -1528,9 +1372,13 @@ const handleLogout = async () => {
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
-            className="fixed inset-0 z-50 bg-slate-900/60  flex flex-col items-center justify-between pb-16 pt-24"
+            className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-3xl flex flex-col items-center justify-between pb-16 pt-24"
           >
-
+            {/* iOS Glass Background Blob */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+               <div className="absolute top-[10%] left-[20%] w-64 h-64 bg-emerald-500/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+               <div className="absolute bottom-[20%] right-[10%] w-80 h-80 bg-blue-500/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+            </div>
 
             <div className="text-center">
               {fakeCallState === 'incoming' ? (
@@ -1547,7 +1395,7 @@ const handleLogout = async () => {
                 <div className="w-full flex flex-col items-center gap-8">
                    <div className="flex w-full max-w-sm justify-between px-6 mb-8">
                      <div className="flex flex-col items-center gap-2">
-                       <button onClick={endFakeCall} className="w-16 h-16 rounded-full bg-rose-500/80  flex items-center justify-center text-white -rose transition-all">
+                       <button onClick={endFakeCall} className="w-16 h-16 rounded-full bg-rose-500/80 backdrop-blur-md flex items-center justify-center text-white -rose transition-all">
                          <Phone size={28} className="rotate-[135deg]" />
                        </button>
                        <span className="text-white/70 text-sm">Decline</span>
@@ -1562,7 +1410,7 @@ const handleLogout = async () => {
               ) : (
                 <button 
                   onClick={endFakeCall}
-                  className="w-[72px] h-[72px] rounded-full bg-rose-500/90  flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] -rose transition-all mt-auto"
+                  className="w-[72px] h-[72px] rounded-full bg-rose-500/90 backdrop-blur-md flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] -rose transition-all mt-auto"
                 >
                   <Phone size={36} className="rotate-[135deg]" />
                 </button>
@@ -1573,7 +1421,7 @@ const handleLogout = async () => {
       </AnimatePresence>
 
       {/* Safety Bot */}
-      {showBot && <SafetyBot onClose={() => setShowBot(false)} messages={botMessages} setMessages={setBotMessages} />}
+      {showBot && <SafetyBot onClose={() => setShowBot(false)} />}
       
       {/* Floating Action Button for Bot */}
       <button
@@ -1582,6 +1430,6 @@ const handleLogout = async () => {
       >
         <Bot size={24} />
       </button>
-    </>
+    </div>
   );
 }

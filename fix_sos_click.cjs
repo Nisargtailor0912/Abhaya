@@ -1,53 +1,51 @@
 const fs = require('fs');
-const file = 'src/App.tsx';
-let content = fs.readFileSync(file, 'utf8');
+let app = fs.readFileSync('src/App.tsx', 'utf8');
 
-const targetFunction = `  const handleSOSClick = async () => {
-    if (sosActive) {
-      setSosActive(false);
-      setCountdown(null);
-      if (currentEmergencyId) {
-        try {
-          await updateDoc(doc(db, 'emergencies', currentEmergencyId), {
-            status: 'resolved'
-          });
-          setCurrentEmergencyId(null);
-        } catch (err) {
-          console.error("Error resolving emergency record:", err);
-        }
-      }
-    } else {
+// 1. Change handleSOSClick to activate immediately
+const oldHandleSOSClick = `    } else {
       setCountdown(3);
-    }
-  };`;
+    }`;
 
-const newFunction = `  const handleSOSClick = async () => {
-    if (countdown !== null) {
-      setCountdown(null);
-      return;
-    }
-    if (sosActive) {
-      setSosActive(false);
-      setCountdown(null);
-      if (currentEmergencyId) {
-        try {
-          await updateDoc(doc(db, 'emergencies', currentEmergencyId), {
-            status: 'resolved'
-          });
-          setCurrentEmergencyId(null);
-        } catch (err) {
-          console.error("Error resolving emergency record:", err);
-        }
-      }
-    } else {
-      setCountdown(3);
-    }
-  };`;
+const newHandleSOSClick = `    } else {
+      activateSOS();
+    }`;
+app = app.replace(oldHandleSOSClick, newHandleSOSClick);
 
-if(content.includes(targetFunction)) {
-  content = content.replace(targetFunction, newFunction);
-  fs.writeFileSync(file, content, 'utf8');
-  console.log('Fixed handleSOSClick');
-} else {
-  console.log('Could not find handleSOSClick');
-}
+// 2. Update activateSOS to fix sms/tel
+const targetActivate = `    const smsLink = document.createElement('a');
+    smsLink.href = \`sms:\${smsPhones}?body=\${message}\`;
+    smsLink.target = '_top';
+    document.body.appendChild(smsLink);
+    smsLink.click();
+    document.body.removeChild(smsLink);
+    
+    setTimeout(() => {
+        const telLink = document.createElement('a');
+        telLink.href = \`tel:\${emergencyNumber}\`;
+        telLink.target = '_top';
+        document.body.appendChild(telLink);
+        telLink.click();
+        document.body.removeChild(telLink);
+    }, 500);
+
+    const contactNames = contacts.length > 0 ? contacts.map(c => c.name).join(', ') : 'No trusted contacts saved';
+    alert(\`EMERGENCY SOS ACTIVATED!\\n\\n1. Request sent to Admin Portal.\\n2. Notifying Trusted Contacts (\${contactNames}) with a high-priority alert ringtone call.\\n3. SMS messages dispatched with your live location link.\\n\\nStay calm. Help is on the way.\`);`;
+
+const newActivate = `    // Use hidden iframe for SMS to avoid blocking tel intent
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = \`sms:\${smsPhones}?body=\${message}\`;
+    document.body.appendChild(iframe);
+    
+    // Slight delay to allow SMS intent to fire before tel intent
+    setTimeout(() => {
+        window.location.href = \`tel:\${emergencyNumber}\`;
+    }, 300);
+
+    const contactNames = contacts.length > 0 ? contacts.map(c => c.name).join(', ') : 'No trusted contacts saved';
+    // Removed blocking alert to allow intents to fire. Show a non-blocking toast or rely on UI updates.
+    // The UI already shows "Active" state.`;
+
+app = app.replace(targetActivate, newActivate);
+
+fs.writeFileSync('src/App.tsx', app);
