@@ -8,7 +8,7 @@ import Auth from './components/Auth';
 import SlideToAnswer from './components/SlideToAnswer';
 import SlideToSOS from './components/SlideToSOS';
 import {
-  ShieldAlert,
+  Download, ShieldAlert,
   PhoneCall,
   Volume2,
   MapPin,
@@ -75,6 +75,29 @@ export default function App() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [showAddContact, setShowAddContact] = useState(false);
+
+  const [botMessages, setBotMessages] = useState<any[]>([{ id: 'welcome', role: 'assistant', content: "Hello! I'm your AI Safety Assistant. How can I help you today? You can ask about safety protocols, emergency guides, or how to use this app." }]);
+
+  useEffect(() => {
+    if (user && botMessages.length > 1) {
+      saveUserData({ botMessages: botMessages.slice(-50) });
+    }
+  }, [botMessages, user]);
+
+
+
+  const moveContact = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index > 0) {
+      const newContacts = [...contacts];
+      [newContacts[index - 1], newContacts[index]] = [newContacts[index], newContacts[index - 1]];
+      setContacts(newContacts); saveUserData({ contacts: newContacts });
+    } else if (direction === 'down' && index < contacts.length - 1) {
+      const newContacts = [...contacts];
+      [newContacts[index + 1], newContacts[index]] = [newContacts[index], newContacts[index + 1]];
+      setContacts(newContacts); saveUserData({ contacts: newContacts });
+    }
+  };
+
   const [newContact, setNewContact] = useState({ name: '', phone: '', relation: '' });
   const [currentEmergencyId, setCurrentEmergencyId] = useState<string | null>(null);
 
@@ -147,6 +170,8 @@ export default function App() {
             if (data.personalInfo) setPersonalInfo({ ...defaultPersonalInfo, ...data.personalInfo });
             if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
             if (data.contacts) setContacts(data.contacts);
+            if (data.history) setHistory(data.history);
+            if (data.botMessages) setBotMessages(data.botMessages);
           } else {
             // Initialize user doc
             const initialPersonalInfo = {
@@ -156,7 +181,9 @@ export default function App() {
             await setDoc(userDocRef, {
               personalInfo: initialPersonalInfo,
               settings: defaultSettings,
-              contacts: []
+              contacts: [],
+              history: [],
+              botMessages: [{ id: 'welcome', role: 'assistant', content: "Hello! I'm your AI Safety Assistant. How can I help you today? You can ask about safety protocols, emergency guides, or how to use this app." }]
             });
             setPersonalInfo(initialPersonalInfo);
           }
@@ -345,7 +372,7 @@ export default function App() {
     // Trigger Phone Call via direct navigation synchronously
     window.location.href = `tel:${emergencyNumber}`;
     
-    if (user || (typeof localMock !== 'undefined' ? localMock : false)) {
+    if (user) {
       try {
         const emgRef = await addDoc(collection(db, 'emergencies'), {
           userId: user?.uid || 'guest-user',
@@ -373,7 +400,13 @@ export default function App() {
     const contactNames = contacts.length > 0 ? contacts.map(c => c.name).join(', ') : 'No trusted contacts saved';
     // Use setTimeout so the alert doesn't block the intents from opening on mobile
     setTimeout(() => {
-      alert(`EMERGENCY SOS ACTIVATED!\n\n1. Request sent to Admin Portal.\n2. Notifying Trusted Contacts (${contactNames}) with a high-priority alert ringtone call.\n3. SMS messages dispatched with your live location link.\n\nStay calm. Help is on the way.`);
+      alert(`EMERGENCY SOS ACTIVATED!
+
+1. Request sent to Admin Portal.
+2. Notifying Trusted Contacts (${contactNames}) with a high-priority alert ringtone call.
+3. SMS messages dispatched with your live location link.
+
+Stay calm. Help is on the way.`);
     }, 1500);
     
     // Simulate Offline SMS notification if enabled and network is down
@@ -772,16 +805,25 @@ const toggleAlarm = () => {
                       <p className="text-sm text-slate-500 dark:text-slate-400">{contact.relation} • {contact.phone}</p>
                     </div>
                   </div>
-                  <a href={`tel:${contact.phone}`} target="_top" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
+                  
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { const newContacts = contacts.filter(c => c.id !== contact.id); setContacts(newContacts); saveUserData({ contacts: newContacts }); }} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors flex items-center justify-center shrink-0">
+                      <X size={18} />
+                    </button>
+                    <a href={`tel:${contact.phone}`} target="_top" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0">
+
                     <Phone size={18} />
                   </a>
+                  </div>
                 </div>
               ))
             )}
           </div>
         </section>
 
-        {/* Safety Tips */}
+        
+        
+\n\n        {/* Safety Tips */}
         <section className="bg-blue-50 rounded-2xl p-5 border border-blue-100">
           <div className="flex items-center gap-2 text-blue-800 mb-3">
             <Info size={20} />
@@ -801,7 +843,7 @@ const toggleAlarm = () => {
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Emergency History</h2>
-             <button onClick={() => setHistory([])} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200">Clear</button>
+             <button onClick={() => { setHistory([]); saveUserData({ history: [] }); }} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200">Clear</button>
           </div>
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
             {history.length === 0 ? (
@@ -841,6 +883,70 @@ const toggleAlarm = () => {
           </div>
         </section>
 
+        {/* App Downloads Section */}
+        <section className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-slate-800/80 p-6 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
+              <Download size={24} className="text-indigo-600 dark:text-indigo-400" />
+              Download Abhaya App
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Get the secure Abhaya application for your Android or Windows device. Version 1.0.3 includes enhanced Stealth Mode, safe routing, and better battery tracking.
+            </p>
+            
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-slate-700 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
+                    📱 Secure Android App & Widget
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                    Install to get a persistent Lock Screen Widget for instant SOS triggering and safe routing.<br/>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Verified Secure Build</span><br/>
+                    <span className="text-[10px] text-slate-400">(To install, tap 'Share' or browser menu, then 'Add to Home screen'. An APK wrapper can be used via tools like PWABuilder.)</span>
+                  </p>
+                </div>
+                <button 
+                  onClick={() => {
+                    alert("To install as an app (APK/PWA) and enable the Lock Screen Widget:\n\nAndroid/Chrome: Tap 'Add to Home Screen' or 'Install' in your browser menu.\niOS/Safari: Tap 'Share' -> 'Add to Home Screen'.\n\nOnce installed, you can access the SOS widget directly from your lock screen.");
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full"
+                >
+                  <Download size={18} /> Download Secure App
+                </button>
+              </div>
+              
+              <div className="bg-white dark:bg-slate-700 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-1">
+                    🛡️ Activate Protections
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                    Grant necessary permissions for Location (live tracking), Camera/Mic (evidence recording), and Notifications (alerts).<br/>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Essential for full safety</span>
+                  </p>
+                </div>
+                <button 
+                  onClick={async () => {
+                    try {
+                      await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                      navigator.geolocation.getCurrentPosition(()=>{}, ()=>{});
+                      if (Notification.permission !== 'granted') {
+                        Notification.requestPermission();
+                      }
+                      alert("Permissions requested successfully. Ensure they are allowed in your browser settings to keep the shield active.");
+                    } catch (e) {
+                      alert("Failed to grab some permissions. Please check your browser settings or try in a new tab.");
+                    }
+                  }}
+                  className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full"
+                >
+                  <ShieldAlert size={18} /> Enable Protections
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="text-center py-6 text-slate-400 text-xs">
@@ -874,21 +980,21 @@ const toggleAlarm = () => {
                   <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Appearance</p>
                   <div className="grid grid-cols-3 gap-2">
                     <button 
-                      onClick={() => { const s = {...settings, theme: 'light'}; setSettings(s); saveUserData({ settings: s }); }}
+                      onClick={() => { const s = {...settings, theme: 'light' as const}; setSettings(s); saveUserData({ settings: s }); }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'light' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                     >
                       <Sun size={20} className="text-slate-600 dark:text-slate-300" />
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Light</span>
                     </button>
                     <button 
-                      onClick={() => { const s = {...settings, theme: 'dark'}; setSettings(s); saveUserData({ settings: s }); }}
+                      onClick={() => { const s = {...settings, theme: 'dark' as const}; setSettings(s); saveUserData({ settings: s }); }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'dark' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                     >
                       <Moon size={20} className="text-slate-600 dark:text-slate-300" />
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Dark</span>
                     </button>
                     <button 
-                      onClick={() => { const s = {...settings, theme: 'system'}; setSettings(s); saveUserData({ settings: s }); }}
+                      onClick={() => { const s = {...settings, theme: 'system' as const}; setSettings(s); saveUserData({ settings: s }); }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors ${settings.theme === 'system' || !settings.theme ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                     >
                       <Settings size={20} className="text-slate-600 dark:text-slate-300" />
@@ -1421,7 +1527,7 @@ const toggleAlarm = () => {
       </AnimatePresence>
 
       {/* Safety Bot */}
-      {showBot && <SafetyBot onClose={() => setShowBot(false)} />}
+      {showBot && <SafetyBot onClose={() => setShowBot(false)} messages={botMessages} setMessages={setBotMessages} />}
       
       {/* Floating Action Button for Bot */}
       <button

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, initializeFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -19,3 +19,8 @@ export const db = initializeFirestore(app, { experimentalForceLongPolling: true 
 export const googleProvider = new GoogleAuthProvider();
 
 
+
+
+enableIndexedDbPersistence(db).catch((err) => {
+  console.log("Persistence error:", err.code);
+});

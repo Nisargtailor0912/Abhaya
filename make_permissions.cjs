@@ -1,7 +1,6 @@
 const fs = require('fs');
 let app = fs.readFileSync('src/App.tsx', 'utf8');
 
-// The section I just injected
 const permBtnCode = `
         {/* Download & Permissions Settings */}
         <section className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 mt-6">
@@ -33,7 +32,7 @@ const permBtnCode = `
 
               <button
                 onClick={() => {
-                  alert("To install as an app (APK/PWA):\\n\\nAndroid/Chrome: Tap 'Add to Home Screen' or 'Install' in your browser menu.\\niOS/Safari: Tap 'Share' -> 'Add to Home Screen'.\\n\\nOnce installed, you can access the app directly from your home screen.");
+                  alert("To install as an app (APK/PWA):\n\nAndroid/Chrome: Tap 'Add to Home Screen' or 'Install' in your browser menu.\niOS/Safari: Tap 'Share' -> 'Add to Home Screen'.\n\nOnce installed, you can access the app directly from your home screen.");
                 }}
                 className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium rounded-xl py-3 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
               >
@@ -44,5 +43,9 @@ const permBtnCode = `
         </section>
 `;
 
-app = app.replace(permBtnCode + '\\n\\n        ', '');
-fs.writeFileSync('src/App.tsx', app);
+const anchor = '{/* Safety Tips */}';
+
+if (!app.includes('Enable Protections (Permissions)')) {
+    app = app.replace(anchor, permBtnCode + '\\n\\n        ' + anchor);
+    fs.writeFileSync('src/App.tsx', app);
+}

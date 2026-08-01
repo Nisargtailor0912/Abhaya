@@ -93,6 +93,10 @@ export default function Auth({ onAuth, theme, onThemeChange }: { onAuth: () => v
   };
 
   const handleGoogleSignIn = async () => {
+    if (window.self !== window.top) {
+      setError('Google Sign-In is blocked in this preview frame. Please open the app in a new tab (top right corner) or continue as a Guest.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
