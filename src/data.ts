@@ -56,6 +56,7 @@ export const defaultSettings = {
   stealthMode: false,
   stealthPIN: "1234",
   blurSensitiveInfo: false,
+  autoDiagnosticUpdates: true,
 };
 export const defaultPersonalInfo = {
   fullName: 'Sarah Jenkins',

@@ -31,6 +31,7 @@ export interface UserSettings {
   stealthMode?: boolean;
   stealthPIN?: string;
   blurSensitiveInfo?: boolean;
+  autoDiagnosticUpdates?: boolean;
 }
 
 export interface PersonalInfo {
